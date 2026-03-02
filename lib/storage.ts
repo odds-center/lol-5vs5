@@ -1,6 +1,6 @@
 import type { Player, TeamAssignment } from '@/types';
 
-const EMPTY_SLOT: Omit<Player, 'id'> = { name: '', mmr: 0, rolePreference: '' };
+const EMPTY_SLOT: Omit<Player, 'id'> = { name: '', mmr: 1000, rolePreference: '' };
 
 const PLAYERS_KEY = 'lol-5vs5-players';
 const ASSIGNMENT_KEY = 'lol-5vs5-last-assignment';
