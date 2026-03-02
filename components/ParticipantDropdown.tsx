@@ -3,6 +3,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { Player } from '@/types';
+import { useTranslation } from '@/components/LanguageProvider';
 
 interface ParticipantDropdownProps {
   slots: Player[];
@@ -18,8 +19,10 @@ export default function ParticipantDropdown({
   value,
   onChange,
   excludeId = '',
-  placeholder = '선택',
+  placeholder,
 }: ParticipantDropdownProps) {
+  const { t } = useTranslation();
+  const place = placeholder ?? t('select');
   const LIST_GAP = 4;
   /** 목록 전체가 보이도록 여유 높이 (참가자 11명 기준) */
   const LIST_MAX_HEIGHT = 480;
@@ -79,8 +82,8 @@ export default function ParticipantDropdown({
   const selectedIndex = slots.findIndex((p) => p.id === value);
   const label =
     value && selectedSlot
-      ? `참가자 ${selectedIndex + 1}${selectedSlot.name?.trim() ? ` (${selectedSlot.name.trim()})` : ''}`
-      : placeholder;
+      ? `${t('participant')} ${selectedIndex + 1}${selectedSlot.name?.trim() ? ` (${selectedSlot.name.trim()})` : ''}`
+      : place;
 
   const dropdownList =
     open &&
@@ -108,13 +111,13 @@ export default function ParticipantDropdown({
               !value ? 'bg-lol-bg-card/80 text-lol-gold' : 'text-lol-gold-bright'
             }`}
           >
-            {placeholder}
+            {place}
           </button>
         </li>
         {slots.map((p, i) => {
           const isExcluded = p.id === excludeId;
           const isSelected = value === p.id;
-          const optionLabel = `참가자 ${i + 1}${p.name?.trim() ? ` (${p.name.trim()})` : ''}`;
+          const optionLabel = `${t('participant')} ${i + 1}${p.name?.trim() ? ` (${p.name.trim()})` : ''}`;
           return (
             <li key={p.id} role="option" aria-selected={isSelected}>
               <button
@@ -134,7 +137,7 @@ export default function ParticipantDropdown({
               >
                 <span className="lol-desc shrink-0 text-lol-muted">#{i + 1}</span>
                 <span className="min-w-0 flex-1 truncate">{optionLabel}</span>
-                {isExcluded && <span className="lol-desc shrink-0 text-lol-muted">(선택됨)</span>}
+                {isExcluded && <span className="lol-desc shrink-0 text-lol-muted">{t('selected')}</span>}
               </button>
             </li>
           );

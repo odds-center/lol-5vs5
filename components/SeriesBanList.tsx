@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { SeriesBans } from '@/types';
-import { CHAMPION_NAMES } from '@/lib/randomNames';
+import { filterChampionsBySearch } from '@/lib/randomNames';
+import { useTranslation } from '@/components/LanguageProvider';
 
 const SLOT_COUNT = 5;
 const CHAMPION_LIST_HEIGHT = 280;
@@ -30,21 +31,30 @@ function firstEmptySlot(bans: string[]): number {
  * 경기별 블루팀 5밴 / 레드팀 5밴. 슬롯 클릭 시 해당 경기 아래에 높이 제한된 챔피언 목록 인라인 표시.
  */
 export default function SeriesBanList({ games, onUpdate }: SeriesBanListProps) {
+  const { t } = useTranslation();
   const [pickingFor, setPickingFor] = useState<{
     gameIndex: number;
     team: TeamKind;
     slotIndex: number;
   } | null>(null);
+  const [banSearchQuery, setBanSearchQuery] = useState('');
+
+  useEffect(() => {
+    if (!pickingFor) setBanSearchQuery('');
+  }, [pickingFor]);
 
   const setBan = (gameIndex: number, team: TeamKind, slotIndex: number, name: string) => {
-    const next = games.map((g, i) => {
-      if (i !== gameIndex) return g;
-      const blue = ensureFive(g.blueBans);
-      const red = ensureFive(g.redBans);
-      if (team === 'blue') blue[slotIndex] = name;
-      else red[slotIndex] = name;
-      return { blueBans: blue, redBans: red };
-    });
+    const g = games[gameIndex];
+    if (!g) return;
+    const blue = ensureFive(g.blueBans);
+    const red = ensureFive(g.redBans);
+    const alreadyBanned = new Set([...blue, ...red].filter(Boolean));
+    if (alreadyBanned.has(name)) return; // 같은 경기 내 중복 벤 방지
+    if (team === 'blue') blue[slotIndex] = name;
+    else red[slotIndex] = name;
+    const next = games.map((game, i) =>
+      i === gameIndex ? { blueBans: blue, redBans: red } : game,
+    );
     onUpdate(next);
   };
 
@@ -88,14 +98,14 @@ export default function SeriesBanList({ games, onUpdate }: SeriesBanListProps) {
   return (
     <section className="flex flex-col gap-2">
       <h3 className="text-center font-cinzel text-sm font-bold uppercase tracking-[0.25em] text-lol-gold">
-        Series Ban
+        {t('seriesBan')}
       </h3>
 
       {games.length === 0 ? (
         <div className="rounded-lg border border-lol-border bg-lol-bg-card/60 py-5 text-center">
-          <p className="lol-desc mb-2 text-lol-muted">아직 밴 목록이 없습니다.</p>
+          <p className="lol-desc mb-2 text-lol-muted">{t('noBansYet')}</p>
           <button type="button" onClick={addGame} className="lol-btn-primary rounded-lg py-2 px-4">
-            1경기 밴 추가
+            {t('addGameBans')}
           </button>
         </div>
       ) : (
@@ -104,20 +114,23 @@ export default function SeriesBanList({ games, onUpdate }: SeriesBanListProps) {
             <div key={gameIndex} className="rounded-lg border border-lol-border bg-lol-bg-card/70">
               <div className="flex items-center justify-between px-2.5 py-1.5">
                 <span className="font-cinzel text-xs font-bold uppercase tracking-wider text-lol-gold">
-                  경기 {gameIndex + 1}
+                  {t('game')} {gameIndex + 1}
                 </span>
                 <button
                   type="button"
                   onClick={() => resetGameBans(gameIndex)}
                   className="lol-desc text-lol-muted hover:text-amber-400"
-                  title="이 경기의 블루/레드 밴 목록만 비웁니다"
+                  title={t('resetGameBansTitle')}
                 >
-                  이 경기 밴 초기화
+                  {t('resetGameBans')}
                 </button>
               </div>
               <div className="grid grid-cols-1 gap-2 px-2.5 pb-2 sm:grid-cols-2">
                 <TeamBanRow
-                  teamLabel="블루 팀 밴"
+                  teamLabel={t('blueTeamBan')}
+                  selectedLabel={t('selected')}
+                  emptySlotLabel={t('emptySlot')}
+                  unbanLabel={t('unban')}
                   teamColor="blue"
                   bans={ensureFive(game.blueBans)}
                   gameIndex={gameIndex}
@@ -129,7 +142,10 @@ export default function SeriesBanList({ games, onUpdate }: SeriesBanListProps) {
                   onClear={(slotIndex) => clearBan(gameIndex, 'blue', slotIndex)}
                 />
                 <TeamBanRow
-                  teamLabel="레드 팀 밴"
+                  teamLabel={t('redTeamBan')}
+                  selectedLabel={t('selected')}
+                  emptySlotLabel={t('emptySlot')}
+                  unbanLabel={t('unban')}
                   teamColor="red"
                   bans={ensureFive(game.redBans)}
                   gameIndex={gameIndex}
@@ -142,37 +158,61 @@ export default function SeriesBanList({ games, onUpdate }: SeriesBanListProps) {
                 />
               </div>
               {/* 챔피언 선택 목록: 이 경기가 선택된 경우에만 표시 (다른 경기 선택 시 close) */}
-              {pickingFor?.gameIndex === gameIndex && (
+              {pickingFor?.gameIndex === gameIndex && (() => {
+                const blue = ensureFive(game.blueBans);
+                const red = ensureFive(game.redBans);
+                const bannedInThisGame = new Set([...blue, ...red].filter(Boolean));
+                const currentSlotValue = (pickingFor.team === 'blue' ? blue : red)[pickingFor.slotIndex]?.trim() ?? '';
+                if (currentSlotValue) bannedInThisGame.delete(currentSlotValue);
+                const filteredChampions = filterChampionsBySearch(banSearchQuery);
+                return (
                 <div className="border-t border-lol-border/70 px-2.5 py-1.5">
-                  <div className="mb-1 flex items-center justify-between">
+                  <div className="mb-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                     <span className="lol-desc text-lol-muted">
-                      챔피언 선택 · 경기 {gameIndex + 1} ·{' '}
-                      {pickingFor.team === 'blue' ? '블루' : '레드'} 팀 슬롯 {pickingFor.slotIndex + 1}
+                      {t('selectChampion')} · {t('game')} {gameIndex + 1} ·{' '}
+                      {pickingFor.team === 'blue' ? t('teamBlue') : t('teamRed')} {t('slotLabel')} {pickingFor.slotIndex + 1}
                     </span>
-                    <button
-                      type="button"
-                      onClick={() => setPickingFor(null)}
-                      className="lol-desc text-lol-muted hover:text-lol-gold"
-                    >
-                      선택 취소
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={banSearchQuery}
+                        onChange={(e) => setBanSearchQuery(e.target.value)}
+                        placeholder={t('searchChampion')}
+                        className="lol-input w-full min-w-0 max-w-[200px] rounded-lg border border-lol-border bg-lol-bg-card px-3 py-1.5 text-sm transition-all duration-200 placeholder:text-lol-muted focus:border-lol-gold/60 focus:outline-none focus:ring-1 focus:ring-lol-gold/40 sm:max-w-[220px]"
+                        aria-label={t('searchChampion')}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setPickingFor(null)}
+                        className="lol-desc shrink-0 text-lol-muted transition-colors hover:text-lol-gold"
+                      >
+                        {t('cancelSelect')}
+                      </button>
+                    </div>
                   </div>
                   <div
-                    className="flex flex-wrap justify-center gap-1.5 overflow-y-auto"
+                    className="flex flex-wrap justify-center gap-1.5 overflow-y-auto transition-opacity duration-200"
                     style={{ maxHeight: CHAMPION_LIST_HEIGHT }}
                   >
-                    {CHAMPION_NAMES.map((name) => (
+                    {filteredChampions.map(({ name }) => {
+                      const disabled = bannedInThisGame.has(name);
+                      return (
                       <button
                         key={name}
                         type="button"
+                        disabled={disabled}
                         onClick={() => handleSelect(name, gameIndex)}
-                        className="series-ban-cell relative flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-lol-border bg-lol-card transition-colors hover:border-lol-gold/60 hover:bg-lol-card/90 sm:h-12 sm:w-12"
-                        title={name}
+                        className={`series-ban-cell relative flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-lol-border bg-lol-card transition-all duration-200 ease-out hover:scale-[1.03] focus:outline-none focus:ring-2 focus:ring-lol-gold/50 sm:h-12 sm:w-12 ${
+                          disabled
+                            ? 'cursor-not-allowed scale-100 opacity-40 hover:scale-100'
+                            : 'hover:border-lol-gold/60 hover:bg-lol-card/90'
+                        }`}
+                        title={disabled ? `${name} (${t('alreadyBannedInGame')})` : name}
                       >
                         <img
                           src={`/champion/${encodeURIComponent(name)}.webp`}
                           alt=""
-                          className="absolute inset-0 h-full w-full object-cover object-top"
+                          className="absolute inset-0 h-full w-full object-cover object-top transition-opacity duration-200"
                           onLoad={(e) =>
                             e.currentTarget.closest('button')?.setAttribute('data-img-loaded', '')
                           }
@@ -184,10 +224,17 @@ export default function SeriesBanList({ games, onUpdate }: SeriesBanListProps) {
                           {name.length > 2 ? name.slice(0, 2) : name}
                         </span>
                       </button>
-                    ))}
+                    );
+                    })}
                   </div>
+                  {filteredChampions.length === 0 && banSearchQuery.trim() && (
+                    <p className="lol-desc mt-2 text-center text-sm text-lol-muted">
+                      &quot;{banSearchQuery}&quot; — {t('searchNoResults')}
+                    </p>
+                  )}
                 </div>
-              )}
+                );
+              })()}
             </div>
           ))}
           <button
@@ -195,7 +242,7 @@ export default function SeriesBanList({ games, onUpdate }: SeriesBanListProps) {
             onClick={addGame}
             className="lol-btn-secondary w-full rounded-lg py-1.5 sm:w-auto sm:min-w-[140px]"
           >
-            다음 경기 밴 추가
+            {t('addNextGameBans')}
           </button>
         </>
       )}
@@ -206,6 +253,9 @@ export default function SeriesBanList({ games, onUpdate }: SeriesBanListProps) {
 
 function TeamBanRow({
   teamLabel,
+  selectedLabel,
+  emptySlotLabel,
+  unbanLabel,
   teamColor,
   bans,
   gameIndex,
@@ -214,6 +264,9 @@ function TeamBanRow({
   onClear,
 }: {
   teamLabel: string;
+  selectedLabel: string;
+  emptySlotLabel: string;
+  unbanLabel: string;
   teamColor: 'blue' | 'red';
   bans: string[];
   gameIndex: number;
@@ -239,13 +292,15 @@ function TeamBanRow({
     >
       <p className="lol-desc mb-1 font-semibold text-lol-muted">
         {teamLabel}
-        {isSelected && <span className="ml-1 text-lol-gold">(선택됨)</span>}
+        {isSelected && <span className="ml-1 text-lol-gold">{selectedLabel}</span>}
       </p>
       <div className="flex flex-wrap justify-center gap-1">
         {bans.map((name, slotIndex) => (
           <BanSlot
             key={slotIndex}
             championName={name}
+            emptySlotLabel={emptySlotLabel}
+            unbanLabel={unbanLabel}
             onClear={(e) => {
               e.stopPropagation();
               onClear(slotIndex);
@@ -259,9 +314,13 @@ function TeamBanRow({
 
 function BanSlot({
   championName,
+  emptySlotLabel,
+  unbanLabel,
   onClear,
 }: {
   championName: string;
+  emptySlotLabel: string;
+  unbanLabel: string;
   onClear: (e: React.MouseEvent) => void;
 }) {
   const filled = championName.trim() !== '';
@@ -270,7 +329,7 @@ function BanSlot({
     <div className="relative">
       <div
         className="series-ban-cell relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-lol-border bg-lol-card transition-all sm:h-14 sm:w-14"
-        title={filled ? championName : '빈 슬롯'}
+        title={filled ? championName : emptySlotLabel}
       >
         {filled ? (
           <>
@@ -298,8 +357,8 @@ function BanSlot({
           type="button"
           onClick={onClear}
           className="absolute -right-0.5 -top-0.5 z-30 flex h-4 w-4 items-center justify-center rounded-full bg-red-600 text-[10px] text-white hover:bg-red-500"
-          aria-label="밴 해제"
-          title="밴 해제"
+          aria-label={unbanLabel}
+          title={unbanLabel}
         >
           ×
         </button>

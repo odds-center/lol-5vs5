@@ -19,10 +19,12 @@ import {
 import { divideTeams, divideTeamsRandom } from '@/lib/teamAlgorithm';
 import { assignRoles, assignRolesWithPreferences } from '@/lib/roleAssignment';
 import { fillEmptyNames } from '@/lib/randomNames';
+import LanguageSelector from '@/components/LanguageSelector';
 import LinkedPairsEditor from '@/components/LinkedPairsEditor';
 import ParticipantSlots from '@/components/ParticipantSlots';
 import SeriesBanList from '@/components/SeriesBanList';
 import TeamDivisionResult from '@/components/TeamDivisionResult';
+import { useTranslation } from '@/components/LanguageProvider';
 
 type TabId = 'participants' | 'result' | 'bans';
 
@@ -49,6 +51,7 @@ function countValidMmr(players: Player[]): number {
 }
 
 export default function Home() {
+  const { t } = useTranslation();
   const [players, setPlayersState] = useState<Player[]>([]);
   const [assignment, setAssignment] = useState<TeamAssignment | null>(null);
   const [seriesBans, setSeriesBansState] = useState<SeriesBans>([]);
@@ -271,7 +274,7 @@ export default function Home() {
   if (!mounted) {
     return (
       <div className='relative z-10 flex min-h-screen items-center justify-center font-cinzel text-lol-gold'>
-        로딩 중...
+        {t('loading')}
       </div>
     );
   }
@@ -282,21 +285,22 @@ export default function Home() {
   const hasAssignment = assignment !== null;
 
   const tabs: { id: TabId; label: string }[] = [
-    { id: 'participants', label: '참가자' },
-    { id: 'result', label: '결과' },
-    { id: 'bans', label: '밴 목록' },
+    { id: 'participants', label: t('tabParticipants') },
+    { id: 'result', label: t('tabResult') },
+    { id: 'bans', label: t('tabBans') },
   ];
 
   return (
     <main className='relative z-10 flex min-h-screen items-center justify-center p-4 sm:p-6'>
       <div className='lol-panel w-full max-w-6xl'>
-        <header className='lol-panel-header px-4 py-6 text-center sm:px-6 sm:py-8'>
+        <header className='lol-panel-header relative px-4 py-6 text-center sm:px-6 sm:py-8'>
+          <LanguageSelector />
           <h1 className='font-cinzel text-2xl font-bold uppercase tracking-[0.25em] text-lol-gold drop-shadow-sm sm:text-3xl'>
-            LoL 5vs5 내전
+            {t('appTitle')}
           </h1>
           <div className='mx-auto mt-3 h-px w-16 bg-gradient-to-r from-transparent via-lol-gold/60 to-transparent' />
           <p className='lol-desc mt-3 tracking-wide text-lol-muted'>
-            관악구 피바라기 · MMR 밸런스 팀 분배 · 역할 랜덤 배정
+            {t('appSubtitle')}
           </p>
         </header>
 
@@ -325,16 +329,16 @@ export default function Home() {
               )}
               {id === 'bans' && seriesBans.length > 0 && (
                 <span className='lol-desc ml-1.5 font-normal text-lol-muted'>
-                  ({seriesBans.length}경기)
+                  ({seriesBans.length} {t('gamesCount')})
                 </span>
               )}
             </button>
           ))}
         </div>
 
-        <div className='min-h-[320px] overflow-auto px-4 py-5 sm:px-6 sm:py-6'>
+        <div className='min-h-[320px] overflow-auto px-4 py-3 sm:px-6 sm:py-4'>
           {activeTab === 'participants' && (
-            <div className='flex flex-col gap-5'>
+            <div className='flex flex-col gap-3'>
               <ParticipantSlots slots={players} onChange={handleSlotChange} />
               <LinkedPairsEditor
                 slots={players}
@@ -352,7 +356,7 @@ export default function Home() {
               />
               {validMmrCount > 0 && validMmrCount < 10 && (
                 <p className='lol-desc rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-center text-amber-300/95'>
-                  팀 나누기를 하려면 10명 모두 MMR을 입력하세요. 이름이 비어 있으면 롤 챔피언 이름으로 자동 채워집니다.
+                  {t('needMmrAll')}
                 </p>
               )}
               <div className='flex flex-wrap justify-center gap-4 pt-2'>
@@ -365,15 +369,15 @@ export default function Home() {
                   disabled={!canDivide}
                   className='lol-btn-primary min-w-[160px] rounded-lg py-3.5 shadow-md'
                 >
-                  팀 나누기
+                  {t('divideTeams')}
                 </button>
                 <button
                   type='button'
                   onClick={handleFullReset}
                   className='lol-btn-secondary min-w-[130px] rounded-lg py-3'
-                  title='참가자·팀 결과 전부 삭제 후 처음부터'
+                  title={t('fullResetTitle')}
                 >
-                  완전 초기화
+                  {t('fullReset')}
                 </button>
               </div>
             </div>
@@ -392,25 +396,25 @@ export default function Home() {
                   <div className='flex flex-wrap justify-center gap-3'>
                     <button
                       type='button'
-                      title='참가자 명단(10명)을 랜덤으로 다시 섞어 1팀·2팀으로 나눕니다'
+                      title={t('redivideTitle')}
                       onClick={() => {
                         console.log('[관악구 피바라기] 버튼 클릭: 다시 나누기');
                         handleRedivide();
                       }}
                       className='lol-btn-secondary min-w-[120px] rounded-lg py-2.5'
                     >
-                      다시 나누기
+                      {t('redivide')}
                     </button>
                     <button
                       type='button'
-                      title='팀 내에서 역할을 랜덤 배정합니다'
+                      title={t('assignRolesTitle')}
                       onClick={() => {
                         console.log('[관악구 피바라기] 버튼 클릭: 역할 랜덤 배정');
                         handleAssignRoles();
                       }}
                       className='lol-btn-primary min-w-[140px] rounded-lg py-2.5 shadow-md'
                     >
-                      역할 랜덤 배정
+                      {t('assignRoles')}
                     </button>
                     <button
                       type='button'
@@ -420,21 +424,21 @@ export default function Home() {
                       }}
                       className='lol-btn-secondary min-w-[120px] rounded-lg py-2.5'
                     >
-                      참가자 수정
+                      {t('editParticipants')}
                     </button>
                     <button
                       type='button'
                       onClick={handleFullReset}
                       className='lol-btn-secondary min-w-[120px] rounded-lg py-2.5'
-                      title='참가자·팀 결과 전부 삭제 후 처음부터'
+                      title={t('fullResetTitle')}
                     >
-                      완전 초기화
+                      {t('fullReset')}
                     </button>
                   </div>
                 </>
               ) : (
                 <div className='flex flex-col items-center justify-center rounded-xl border border-lol-border bg-lol-bg-card/50 py-12 text-center'>
-                  <p className='mb-5 text-lol-muted'>아직 팀이 나뉘지 않았습니다.</p>
+                  <p className='mb-5 text-lol-muted'>{t('noTeamYet')}</p>
                   <button
                     type='button'
                     onClick={() => {
@@ -443,7 +447,7 @@ export default function Home() {
                     }}
                     className='lol-btn-primary min-w-[200px] rounded-lg py-3.5 shadow-md'
                   >
-                    참가자 탭에서 팀 나누기
+                    {t('goToParticipantsTab')}
                   </button>
                 </div>
               )}
