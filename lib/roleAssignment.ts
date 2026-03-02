@@ -11,7 +11,7 @@ function shuffle<T>(array: T[]): T[] {
 }
 
 /**
- * 팀 5명을 5개 역할에 1:1 랜덤 매핑
+ * 팀 5명을 5개 역할에 1:1 랜덤 매핑. bannedRoles가 있으면 해당 포지션에는 배정하지 않음.
  */
 export function assignRoles(team: Player[]): Record<Role, Player> {
   if (team.length !== 5) {
@@ -19,9 +19,21 @@ export function assignRoles(team: Player[]): Record<Role, Player> {
   }
   const shuffled = shuffle(team);
   const result = {} as Record<Role, Player>;
-  ROLES.forEach((role, i) => {
-    result[role] = shuffled[i];
-  });
+  const assignedRoles = new Set<Role>();
+
+  for (const p of shuffled) {
+    const banned = p.bannedRoles ?? [];
+    const available = ROLES.filter((r) => !assignedRoles.has(r) && !banned.includes(r));
+    const role =
+      available.length > 0
+        ? available[Math.floor(Math.random() * available.length)]
+        : ROLES.find((r) => !assignedRoles.has(r));
+    if (role) {
+      assignedRoles.add(role);
+      result[role] = p;
+    }
+  }
+
   return result;
 }
 
@@ -52,8 +64,12 @@ export function assignRolesWithPreferences(team: Player[]): Record<Role, Player>
   const remainingRoles = () => ROLES.filter((r) => !usedRoles.has(r));
   const remainingPlayers = () => team.filter((p) => !assigned.has(p.id));
 
+  const isBanned = (p: Player, r: Role) => (p.bannedRoles ?? []).includes(r);
+
   for (const role of ROLES) {
-    const candidates = byRole.get(role)?.filter((x) => !assigned.has(x.player.id)) ?? [];
+    const candidates = (byRole.get(role)?.filter((x) => !assigned.has(x.player.id)) ?? []).filter(
+      (x) => !isBanned(x.player, role),
+    );
     if (candidates.length === 1) {
       result[role] = candidates[0].player;
       assigned.add(candidates[0].player.id);
@@ -69,12 +85,15 @@ export function assignRolesWithPreferences(team: Player[]): Record<Role, Player>
   const leftRoles = remainingRoles();
   const leftPlayers = remainingPlayers();
   const leftShuffled = shuffle(leftPlayers);
-  leftRoles.forEach((role, i) => {
-    if (leftShuffled[i]) {
-      result[role] = leftShuffled[i];
-      assigned.add(leftShuffled[i].id);
+
+  for (const role of leftRoles) {
+    const eligible = leftShuffled.filter((p) => !assigned.has(p.id) && !isBanned(p, role));
+    const player = eligible.length > 0 ? eligible[Math.floor(Math.random() * eligible.length)] : leftShuffled.find((p) => !assigned.has(p.id));
+    if (player) {
+      result[role] = player;
+      assigned.add(player.id);
     }
-  });
+  }
 
   return result;
 }
