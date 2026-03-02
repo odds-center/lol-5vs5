@@ -36,7 +36,7 @@ function mergePairsIntoGroups(pairs: LinkedPairs, allIds: string[]): string[][] 
     if (!byRoot.has(r)) byRoot.set(r, []);
     byRoot.get(r)!.push(id);
   }
-  return [...byRoot.values()];
+  return Array.from(byRoot.values());
 }
 
 /** 플레이어 목록을 "유닛"(같은 팀 묶음 또는 1명) 배열로. linkedPairs 있으면 묶음 적용 */
