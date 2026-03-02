@@ -25,6 +25,15 @@ body {
   font-size: 16px;
 }
 
+/* 전역 스크롤바 숨김 */
+* {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+*::-webkit-scrollbar {
+  display: none;
+}
+
 /* LoL 스타일 - @apply 대신 CSS 변수 사용 (Tailwind 테마 클래스 인식 이슈 방지) */
 @layer components {
   .lol-input {
@@ -69,6 +78,15 @@ body {
     font-size: 14px;
   }
 
+  /* 스크롤바 숨기기 (역할 드롭다운 등) */
+  .scrollbar-hide {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
   .lol-btn {
     border-radius: 0.375rem;
     font-weight: 600;
@@ -85,6 +103,7 @@ body {
   .lol-btn-primary:hover:not(:disabled) {
     background-color: color-mix(in srgb, var(--lol-gold) 30%, transparent);
     border-color: var(--lol-gold);
+    box-shadow: 0 0 12px color-mix(in srgb, var(--lol-gold) 25%, transparent);
   }
   .lol-btn-primary:disabled {
     opacity: 0.4;
@@ -100,6 +119,7 @@ body {
   .lol-btn-secondary:hover {
     border-color: color-mix(in srgb, var(--lol-gold) 50%, transparent);
     color: var(--lol-gold);
+    background-color: color-mix(in srgb, var(--lol-card) 90%, var(--lol-bg-card));
   }
 
   .lol-card {
@@ -112,14 +132,15 @@ body {
 
   /* 중앙 패널: 리그 오브 레전드 클라이언트 스타일 프레임 */
   .lol-panel {
-    border-radius: 0.5rem;
+    border-radius: 0.75rem;
     border: 1px solid var(--lol-border);
-    border-top: 2px solid var(--lol-gold);
+    border-top: 3px solid var(--lol-gold);
     background: linear-gradient(180deg, var(--lol-bg-card) 0%, var(--lol-card) 100%);
     box-shadow:
       0 0 0 1px rgba(0, 0, 0, 0.4) inset,
       0 4px 24px rgba(0, 0, 0, 0.5),
-      0 1px 0 var(--lol-border-light) inset;
+      0 1px 0 var(--lol-border-light) inset,
+      0 -1px 0 color-mix(in srgb, var(--lol-gold) 15%, transparent);
   }
 
   .lol-panel-header {
@@ -127,9 +148,21 @@ body {
     letter-spacing: 0.05em;
   }
 
+  .lol-section-title {
+    font-family: var(--font-cinzel), serif;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    color: var(--lol-gold);
+  }
+
   .lol-divider {
     height: 1px;
     background: linear-gradient(90deg, transparent, var(--lol-border), transparent);
+  }
+
+  /* 시리즈 밴: 이미지 로드 시 글자 폴백 숨김 */
+  .series-ban-cell[data-img-loaded] .series-ban-fallback {
+    display: none;
   }
 }
 
@@ -139,8 +172,8 @@ body::before {
   position: fixed;
   inset: 0;
   background:
-    radial-gradient(ellipse 100% 60% at 50% 0%, rgba(20, 45, 70, 0.35), transparent 55%),
-    radial-gradient(ellipse 80% 40% at 50% 100%, rgba(15, 25, 40, 0.3), transparent 50%),
+    radial-gradient(ellipse 100% 60% at 50% 0%, rgba(20, 45, 70, 0.4), transparent 55%),
+    radial-gradient(ellipse 80% 40% at 50% 100%, rgba(15, 25, 40, 0.35), transparent 50%),
     linear-gradient(180deg, #060a10 0%, #0a0e17 30%, #0a0e17 100%);
   pointer-events: none;
   z-index: 0;
