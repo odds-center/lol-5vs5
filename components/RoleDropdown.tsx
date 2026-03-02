@@ -3,8 +3,9 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { RolePreference } from '@/types';
-import { ROLES, ROLE_LABELS, type Role } from '@/types';
+import { ROLES, type Role } from '@/types';
 import RoleIcon from './RoleIcon';
+import { useTranslation } from '@/components/LanguageProvider';
 
 const ROLE_OPTIONS: RolePreference[] = ['', ...ROLES];
 
@@ -19,8 +20,10 @@ export default function RoleDropdown({
   value,
   onChange,
   isOptionDisabled,
-  placeholder = '미정',
+  placeholder,
 }: RoleDropdownProps) {
+  const { t, roleLabels } = useTranslation();
+  const place = placeholder ?? t('roleUnset');
   const LIST_GAP = 4;
   /** 목록 전체가 보이도록 여유 높이 (역할 6개 기준) */
   const LIST_MAX_HEIGHT = 280;
@@ -80,7 +83,7 @@ export default function RoleDropdown({
     return () => document.removeEventListener('mousedown', close);
   }, [open]);
 
-  const label = value !== '' ? ROLE_LABELS[value as Role] : placeholder;
+  const label = value !== '' ? roleLabels[value as Role] : place;
   const disabled = (r: Role) => (isOptionDisabled ? isOptionDisabled(r) : false);
 
   const dropdownList = open && position && typeof document !== 'undefined' && (
@@ -118,8 +121,7 @@ export default function RoleDropdown({
               <span className='inline-flex h-4 w-4 shrink-0 items-center justify-center'>
                 {isRole ? <RoleIcon role={r as Role} size={16} /> : null}
               </span>
-              <span className='min-w-0 flex-1'>{r === '' ? placeholder : ROLE_LABELS[r as Role]}</span>
-              {isDisabled && <span className='lol-desc shrink-0 text-lol-muted'>(마감)</span>}
+              <span className='min-w-0 flex-1'>{r === '' ? place : roleLabels[r as Role]}</span>
             </button>
           </li>
         );

@@ -1,8 +1,9 @@
 'use client';
 
 import type { Player, TeamAssignment } from '@/types';
-import { ROLE_LABELS, type Role } from '@/types';
+import { type Role } from '@/types';
 import RoleIcon from './RoleIcon';
+import { useTranslation } from '@/components/LanguageProvider';
 
 interface TeamDivisionResultProps {
   assignment: TeamAssignment | null;
@@ -19,12 +20,18 @@ function TeamCard({
   roles,
   showRoles,
   teamColor,
+  roleLabels,
+  sumLabel,
+  avgLabel,
 }: {
   title: string;
   team: Player[];
   roles?: Record<Role, Player>;
   showRoles: boolean;
   teamColor: 'blue' | 'red';
+  roleLabels: Record<Role, string>;
+  sumLabel: string;
+  avgLabel: string;
 }) {
   const mmr = teamMmr(team);
   const avg = team.length ? Math.round(mmr / team.length) : 0;
@@ -47,14 +54,14 @@ function TeamCard({
             {title}
           </h3>
           <span className='lol-desc rounded bg-black/20 px-2.5 py-1 text-lol-muted'>
-            합계 {mmr} · 평균 {avg}
+            {sumLabel} {mmr} · {avgLabel} {avg}
           </span>
         </div>
       </div>
       <div className='px-5 py-4'>
         {showRoles && roles ? (
           <ul className='space-y-0'>
-            {(Object.entries(ROLE_LABELS) as [Role, string][]).map(([role, label]) => (
+            {(Object.entries(roleLabels) as [Role, string][]).map(([role, label]) => (
               <li
                 key={role}
                 className='flex items-center justify-between gap-3 border-b border-lol-border/40 py-2.5 last:border-b-0 last:pb-0 transition-colors hover:bg-black/10'
@@ -88,24 +95,31 @@ function TeamCard({
 }
 
 export default function TeamDivisionResult({ assignment, showRoles }: TeamDivisionResultProps) {
+  const { t, roleLabels } = useTranslation();
   if (!assignment) return null;
 
   return (
     <div className='space-y-4'>
       <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5'>
         <TeamCard
-          title='블루팀'
+          title={t('teamBlue')}
           team={assignment.teamA}
           roles={assignment.rolesA}
           showRoles={showRoles}
           teamColor='blue'
+          roleLabels={roleLabels}
+          sumLabel={t('sum')}
+          avgLabel={t('avg')}
         />
         <TeamCard
-          title='레드팀'
+          title={t('teamRed')}
           team={assignment.teamB}
           roles={assignment.rolesB}
           showRoles={showRoles}
           teamColor='red'
+          roleLabels={roleLabels}
+          sumLabel={t('sum')}
+          avgLabel={t('avg')}
         />
       </div>
     </div>

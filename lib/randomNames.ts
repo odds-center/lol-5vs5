@@ -173,6 +173,52 @@ export const CHAMPION_NAMES: string[] = [
   '멜',
 ];
 
+/** 챔피언 영어명 (CHAMPION_NAMES와 동일 순서). 검색용 */
+export const CHAMPION_NAMES_EN: string[] = [
+  'Garen', 'Galio', 'Gangplank', 'Gragas', 'Graves', 'Gwen', 'Gnar', 'Nami', 'Nasus', 'Nautilus',
+  'Nidalee', 'Neeko', 'Nilah', 'Darius', 'Diana', 'Draven', 'Ryze', 'Rakan', 'Rammus', 'Lux',
+  'Rumble', 'Renata Glasc', 'Renekton', 'Leona', "Rek'Sai", 'Rell', 'Rengar', 'Lucian', 'Lulu', 'LeBlanc',
+  'Lee Sin', 'Riven', 'Lissandra', 'Lillia', 'Master Yi', 'Maokai', 'Malzahar', 'Malphite', 'Mordekaiser', 'Morgana',
+  'Dr. Mundo', 'Miss Fortune', 'Milio', 'Bard', 'Varus', 'Vi', 'Vayne', 'Veigar', "Bel'Veth", "Vel'Koz",
+  'Volibear', 'Briar', 'Braum', 'Brand', 'Vladimir', 'Blitzcrank', 'Viego', 'Viktor', 'Poppy', 'Samira',
+  'Sion', 'Sylas', 'Shaco', 'Senna', 'Seraphine', 'Sejuani', 'Sett', 'Sona', 'Soraka', 'Shen', 'Shyvana',
+  'Swain', 'Skarner', 'Smolder', 'Sivir', 'Xin Zhao', 'Syndra', 'Singed', 'Thresh', 'Ahri', 'Amumu',
+  'Aurelion Sol', 'Ivern', 'Azir', 'Akali', 'Akshan', 'Aatrox', 'Aphelios', 'Alistar', 'Annie', 'Anivia',
+  'Ashe', 'Ambessa', 'Yasuo', 'Ekko', 'Elise', 'Wukong', 'Ornn', 'Orianna', 'Aurora', 'Olaf',
+  'Yone', 'Yorick', 'Udyr', 'Urgot', 'Warwick', 'Naafiri', 'Yuumi', 'Irelia', 'Evelynn', 'Ezreal',
+  'Illaoi', 'Jarvan IV', 'Xayah', 'Zyra', 'Jhin', 'Zac', 'Janna', 'Jax', 'Zed', 'Xerath',
+  'Zeri', 'Jayce', 'Zoe', 'Ziggs', 'Jinx', 'Zilean', 'Jinx', "Cho'Gath", 'Karma', 'Camille',
+  'Kassadin', 'Cassiopeia', "Kai'Sa", "Kha'Zix", 'Katarina', 'Kalista', 'Kennen', 'Caitlyn', 'Kayle', 'Kayn',
+  "Kog'Maw", 'Corki', 'Quinn', 'Kled', 'Qiyana', 'Kindred', 'Taric', 'Taliyah', 'Talon', 'Tahm Kench',
+  'Trundle', 'Tristana', 'Tryndamere', 'Twisted Fate', 'Twitch', 'Teemo', 'Pyke', 'Pantheon', 'Fiddlesticks', 'Fiora',
+  'Fizz', 'Heimerdinger', 'Hecarim', 'Hwei', 'Mel',
+];
+
+/** 검색어 정규화: 공백 제거, 소문자 (한/영 검색용) */
+function normalizeForSearch(s: string): string {
+  return s.replace(/\s+/g, '').toLowerCase();
+}
+
+/** 챔피언 이름(한글)으로 검색 가능한 목록 반환. query가 비면 전체, 아니면 한/영 이름에 매칭되는 것만 */
+export function filterChampionsBySearch(
+  query: string,
+  options?: { bannedInThisGame?: Set<string>; currentSlotValue?: string },
+): { name: string; nameEn: string }[] {
+  const normalizedQuery = normalizeForSearch(query);
+  const list = CHAMPION_NAMES.map((name, i) => ({
+    name,
+    nameEn: CHAMPION_NAMES_EN[i] ?? name,
+  }));
+  if (!normalizedQuery.trim()) {
+    return list;
+  }
+  return list.filter(
+    ({ name, nameEn }) =>
+      normalizeForSearch(name).includes(normalizedQuery) ||
+      normalizeForSearch(nameEn).includes(normalizedQuery),
+  );
+}
+
 function shuffle<T>(arr: T[]): T[] {
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {

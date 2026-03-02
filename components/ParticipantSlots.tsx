@@ -1,9 +1,10 @@
 'use client';
 
 import type { Player, RolePreference } from '@/types';
-import { ROLES, ROLE_LABELS, type Role } from '@/types';
+import { ROLES, type Role } from '@/types';
 import RoleIcon from './RoleIcon';
 import RoleDropdown from './RoleDropdown';
+import { useTranslation } from '@/components/LanguageProvider';
 
 const MAX_PER_ROLE = 2;
 
@@ -28,25 +29,26 @@ interface ParticipantSlotsProps {
 }
 
 export default function ParticipantSlots({ slots, onChange }: ParticipantSlotsProps) {
+  const { t, roleLabels } = useTranslation();
   return (
     <div className='overflow-x-auto rounded-xl border border-lol-border bg-lol-bg-card/80 shadow-inner'>
       <table className='w-full min-w-[640px] border-collapse whitespace-nowrap text-base'>
         <thead>
           <tr className='border-b border-lol-border bg-gradient-to-r from-lol-card/90 to-lol-bg-card/90'>
-            <th className='whitespace-nowrap py-3.5 pl-5 pr-2 text-left font-cinzel text-sm font-semibold uppercase tracking-[0.15em] text-lol-gold'>
-              #
+            <th className='whitespace-nowrap py-2 pl-3 pr-1.5 text-left font-cinzel text-sm font-semibold uppercase tracking-[0.15em] text-lol-gold'>
+              {t('colNumber')}
             </th>
-            <th className='whitespace-nowrap py-3.5 px-2 text-left font-cinzel text-sm font-semibold uppercase tracking-[0.15em] text-lol-gold'>
-              닉네임
+            <th className='whitespace-nowrap py-2 px-1.5 text-left font-cinzel text-sm font-semibold uppercase tracking-[0.15em] text-lol-gold'>
+              {t('nickname')}
             </th>
-            <th className='whitespace-nowrap py-3.5 px-2 text-left font-cinzel text-sm font-semibold uppercase tracking-[0.15em] text-lol-gold'>
+            <th className='whitespace-nowrap py-2 px-1.5 text-left font-cinzel text-sm font-semibold uppercase tracking-[0.15em] text-lol-gold'>
               MMR
             </th>
-            <th className='whitespace-nowrap py-3.5 pl-2 pr-2 text-left font-cinzel text-sm font-semibold uppercase tracking-[0.15em] text-lol-gold'>
-              역할군
+            <th className='whitespace-nowrap py-2 pl-1.5 pr-1.5 text-left font-cinzel text-sm font-semibold uppercase tracking-[0.15em] text-lol-gold'>
+              {t('role')}
             </th>
-            <th className='whitespace-nowrap py-3.5 pl-2 pr-5 text-left font-cinzel text-sm font-semibold uppercase tracking-[0.15em] text-lol-gold'>
-              포지션 금지
+            <th className='whitespace-nowrap py-2 pl-1.5 pr-3 text-left font-cinzel text-sm font-semibold uppercase tracking-[0.15em] text-lol-gold'>
+              {t('positionBan')}
             </th>
           </tr>
         </thead>
@@ -56,12 +58,12 @@ export default function ParticipantSlots({ slots, onChange }: ParticipantSlotsPr
               key={slot.id}
               className='border-b border-lol-border/50 transition-colors last:border-b-0 hover:bg-lol-card/30'
             >
-              <td className='lol-desc whitespace-nowrap py-3 pl-5 pr-2'>
-                <span className='inline-flex h-7 min-w-[2.5rem] items-center justify-center rounded-md bg-lol-card/80 px-2 text-center text-lol-muted'>
+              <td className='lol-desc whitespace-nowrap py-1.5 pl-3 pr-1.5'>
+                <span className='inline-flex h-6 min-w-[2rem] items-center justify-center rounded-md bg-lol-card/80 px-1.5 text-center text-sm text-lol-muted'>
                   {i + 1}
                 </span>
               </td>
-              <td className='whitespace-nowrap py-3 px-2'>
+              <td className='whitespace-nowrap py-1.5 px-1.5'>
                 <input
                   type='text'
                   value={slot.name}
@@ -75,11 +77,11 @@ export default function ParticipantSlots({ slots, onChange }: ParticipantSlotsPr
                       slot.bannedRoles,
                     )
                   }
-                  placeholder='닉네임'
+                  placeholder={t('placeholderNickname')}
                   className='lol-input w-full min-w-[5rem] max-w-[140px] rounded-lg'
                 />
               </td>
-              <td className='whitespace-nowrap py-3 px-2'>
+              <td className='whitespace-nowrap py-1.5 px-1.5'>
                 <input
                   type='text'
                   inputMode='text'
@@ -96,11 +98,11 @@ export default function ParticipantSlots({ slots, onChange }: ParticipantSlotsPr
                       slot.bannedRoles,
                     );
                   }}
-                  placeholder='MMR'
+                  placeholder={t('placeholderMmr')}
                   className='lol-input min-w-[8rem] w-[8rem] rounded-lg'
                 />
               </td>
-              <td className='whitespace-nowrap py-3 pl-2 pr-4'>
+              <td className='whitespace-nowrap py-1.5 pl-1.5 pr-2'>
                 <RoleDropdown
                   value={slot.rolePreference ?? ''}
                   onChange={(newRole) => {
@@ -129,11 +131,11 @@ export default function ParticipantSlots({ slots, onChange }: ParticipantSlotsPr
                     onChange(i, slot.name, slot.mmr, newRole, undefined, slot.bannedRoles);
                   }}
                   isOptionDisabled={(role) => countRoleExcept(slots, role, i) >= MAX_PER_ROLE}
-                  placeholder='미정'
+                  placeholder={t('roleUnset')}
                 />
               </td>
-              <td className='whitespace-nowrap py-3 pl-2 pr-5'>
-                <div className='grid grid-cols-5 gap-x-3 gap-y-1.5'>
+              <td className='whitespace-nowrap py-1.5 pl-1.5 pr-3'>
+                <div className='grid grid-cols-5 gap-x-2 gap-y-1'>
                   {(ROLES as Role[]).map((role) => {
                     const banned = (slot.bannedRoles ?? []).includes(role);
                     return (
@@ -165,7 +167,7 @@ export default function ParticipantSlots({ slots, onChange }: ParticipantSlotsPr
                             ✓
                           </span>
                         </span>
-                        <span>{ROLE_LABELS[role]} 금지</span>
+                        <span>{roleLabels[role]} {t('roleBan')}</span>
                       </label>
                     );
                   })}

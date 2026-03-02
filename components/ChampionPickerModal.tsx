@@ -1,6 +1,7 @@
 'use client';
 
 import { CHAMPION_NAMES } from '@/lib/randomNames';
+import { useTranslation } from '@/components/LanguageProvider';
 
 interface ChampionPickerModalProps {
   isOpen: boolean;
@@ -12,6 +13,7 @@ interface ChampionPickerModalProps {
  * 챔피언 선택 모달. 그리드에서 클릭 시 해당 챔피언 이름 반환.
  */
 export default function ChampionPickerModal({ isOpen, onSelect, onClose }: ChampionPickerModalProps) {
+  const { t } = useTranslation();
   if (!isOpen) return null;
 
   return (
@@ -19,7 +21,7 @@ export default function ChampionPickerModal({ isOpen, onSelect, onClose }: Champ
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
       role="dialog"
       aria-modal="true"
-      aria-label="챔피언 선택"
+      aria-label={t('championSelect')}
     >
       <div
         className="max-h-[85vh] w-full max-w-2xl overflow-hidden rounded-lg border border-lol-border bg-lol-card shadow-xl"
@@ -27,7 +29,7 @@ export default function ChampionPickerModal({ isOpen, onSelect, onClose }: Champ
       >
         <div className="flex items-center justify-between border-b border-lol-border bg-lol-bg-card/80 px-4 py-3">
           <h3 className="font-cinzel text-sm font-bold uppercase tracking-wider text-lol-gold">
-            챔피언 선택
+            {t('championSelect')}
           </h3>
           <button
             type="button"
