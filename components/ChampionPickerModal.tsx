@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { CHAMPION_NAMES } from '@/lib/randomNames';
 import { useTranslation } from '@/components/LanguageProvider';
 
@@ -53,18 +54,17 @@ export default function ChampionPickerModal({ isOpen, onSelect, onClose }: Champ
                 className="series-ban-cell relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded border border-lol-border bg-lol-bg-card transition-colors hover:border-lol-gold/60 hover:bg-lol-card sm:h-11 sm:w-11"
                 title={name}
               >
-                <img
+                <Image
                   src={`/champion/${encodeURIComponent(name)}.webp`}
                   alt=""
-                  className="absolute inset-0 h-full w-full object-cover object-top"
-                  onLoad={(e) =>
-                    e.currentTarget.closest('button')?.setAttribute('data-img-loaded', '')
-                  }
+                  width={44}
+                  height={44}
+                  className="relative z-10 h-full w-full object-cover object-top"
                   onError={(e) => {
-                    (e.target as HTMLImageElement).style.display = 'none';
+                    e.currentTarget.style.display = 'none';
                   }}
                 />
-                <span className="series-ban-fallback absolute inset-0 flex items-center justify-center bg-lol-bg-card/90 text-[10px] font-medium text-lol-gold-bright">
+                <span className="series-ban-fallback absolute inset-0 z-0 flex items-center justify-center bg-lol-bg-card/90 text-[10px] font-medium text-lol-gold-bright">
                   {name.length > 2 ? name.slice(0, 2) : name}
                 </span>
               </button>

@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Cinzel, Noto_Sans_KR } from 'next/font/google';
 import './globals.css';
 import { LanguageProvider } from '@/components/LanguageProvider';
+import { cn } from '@/lib/utils';
 
 const cinzel = Cinzel({
   subsets: ['latin'],
@@ -92,7 +93,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang='ko' className={`${cinzel.variable} ${notoSansKr.variable}`}>
+    <html lang='ko' className={cn(cinzel.variable, notoSansKr.variable)}>
       <body className='min-h-screen antialiased font-spiegel'>
         <script
           type='application/ld+json'

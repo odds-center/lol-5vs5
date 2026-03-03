@@ -25,6 +25,7 @@ import ParticipantSlots from '@/components/ParticipantSlots';
 import SeriesBanList from '@/components/SeriesBanList';
 import TeamDivisionResult from '@/components/TeamDivisionResult';
 import { useTranslation } from '@/components/LanguageProvider';
+import { cn } from '@/lib/utils';
 
 type TabId = 'participants' | 'result' | 'bans';
 
@@ -315,11 +316,12 @@ export default function Home() {
                 console.log('[관악구 피바라기] 탭 클릭:', id);
                 setActiveTab(id);
               }}
-              className={`min-w-[5rem] flex-1 py-3.5 text-sm font-semibold uppercase tracking-wider transition-all duration-200 sm:py-4 sm:text-base ${
+              className={cn(
+                'min-w-[5rem] flex-1 py-3.5 text-sm font-semibold uppercase tracking-wider transition-all duration-200 sm:py-4 sm:text-base',
                 activeTab === id
                   ? 'border-b-2 border-lol-gold bg-lol-card/70 text-lol-gold -mb-px shadow-[0_-2px_8px_rgba(0,0,0,0.2)]'
-                  : 'text-lol-muted hover:bg-lol-card/30 hover:text-lol-gold-bright'
-              }`}
+                  : 'text-lol-muted hover:bg-lol-card/30 hover:text-lol-gold-bright',
+              )}
             >
               {label}
               {id === 'participants' && (

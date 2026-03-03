@@ -1,6 +1,8 @@
 'use client';
 
+import Image from 'next/image';
 import type { Role } from '@/types';
+import { cn } from '@/lib/utils';
 
 const ROLE_ICON_PATHS: Record<Role, string> = {
   top: '/roles/top.svg',
@@ -20,13 +22,14 @@ export default function RoleIcon({ role, size = 24, className = '' }: RoleIconPr
   const src = ROLE_ICON_PATHS[role];
   if (!src) return null;
   return (
-    <img
+    <Image
       src={src}
-      alt=''
+      alt=""
       width={size}
       height={size}
-      className={`inline-block shrink-0 ${className}`}
+      className={cn('inline-block shrink-0', className)}
       aria-hidden
+      unoptimized
     />
   );
 }

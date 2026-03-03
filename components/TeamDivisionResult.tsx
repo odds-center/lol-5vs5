@@ -4,6 +4,7 @@ import type { Player, TeamAssignment } from '@/types';
 import { type Role } from '@/types';
 import RoleIcon from './RoleIcon';
 import { useTranslation } from '@/components/LanguageProvider';
+import { cn } from '@/lib/utils';
 
 interface TeamDivisionResultProps {
   assignment: TeamAssignment | null;
@@ -39,14 +40,12 @@ function TeamCard({
 
   return (
     <div
-      className={`overflow-hidden rounded-xl border-2 shadow-lg ${
-        isBlue ? 'border-lol-blue-border bg-lol-blue/50' : 'border-lol-red-border bg-lol-red/50'
-      }`}
-      style={{
-        boxShadow: isBlue
-          ? '0 0 0 1px rgba(14, 40, 66, 0.5) inset, 0 4px 14px rgba(0,0,0,0.3)'
-          : '0 0 0 1px rgba(74, 40, 32, 0.5) inset, 0 4px 14px rgba(0,0,0,0.3)',
-      }}
+      className={cn(
+        'overflow-hidden rounded-xl border-2 shadow-lg',
+        isBlue
+          ? 'border-lol-blue-border bg-lol-blue/50 shadow-[0_0_0_1px_rgba(14,40,66,0.5)_inset,0_4px_14px_rgba(0,0,0,0.3)]'
+          : 'border-lol-red-border bg-lol-red/50 shadow-[0_0_0_1px_rgba(74,40,32,0.5)_inset,0_4px_14px_rgba(0,0,0,0.3)]',
+      )}
     >
       <div className='border-b border-lol-border bg-black/25 px-5 py-3'>
         <div className='flex items-center justify-between'>
