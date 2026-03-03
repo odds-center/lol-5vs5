@@ -2,11 +2,16 @@
 
 import { useState, useEffect } from 'react';
 import type { SeriesBans } from '@/types';
+import { ROLES, type Role } from '@/types';
 import { filterChampionsBySearch } from '@/lib/randomNames';
+import { isChampionInRole } from '@/lib/championRoles';
+import Image from 'next/image';
 import { useTranslation } from '@/components/LanguageProvider';
+import { cn } from '@/lib/utils';
+import { preloadChampionImages } from '@/lib/preload';
+import RoleIcon from './RoleIcon';
 
 const SLOT_COUNT = 5;
-const CHAMPION_LIST_HEIGHT = 280;
 type TeamKind = 'blue' | 'red';
 
 interface SeriesBanListProps {
@@ -31,17 +36,26 @@ function firstEmptySlot(bans: string[]): number {
  * 경기별 블루팀 5밴 / 레드팀 5밴. 슬롯 클릭 시 해당 경기 아래에 높이 제한된 챔피언 목록 인라인 표시.
  */
 export default function SeriesBanList({ games, onUpdate }: SeriesBanListProps) {
-  const { t } = useTranslation();
+  const { t, roleLabels } = useTranslation();
   const [pickingFor, setPickingFor] = useState<{
     gameIndex: number;
     team: TeamKind;
     slotIndex: number;
   } | null>(null);
   const [banSearchQuery, setBanSearchQuery] = useState('');
+  const [banRoleFilter, setBanRoleFilter] = useState<Role | null>(null);
 
   useEffect(() => {
     if (!pickingFor) setBanSearchQuery('');
   }, [pickingFor]);
+
+  // 챔피언 선택 패널이 열리면 현재 목록 이미지 미리 로드
+  useEffect(() => {
+    if (!pickingFor) return;
+    let list = filterChampionsBySearch(banSearchQuery);
+    if (banRoleFilter) list = list.filter(({ name }) => isChampionInRole(name, banRoleFilter));
+    preloadChampionImages(list.map(({ name }) => name), 60);
+  }, [pickingFor, banSearchQuery, banRoleFilter]);
 
   const setBan = (gameIndex: number, team: TeamKind, slotIndex: number, name: string) => {
     const g = games[gameIndex];
@@ -95,49 +109,75 @@ export default function SeriesBanList({ games, onUpdate }: SeriesBanListProps) {
     }
   };
 
+  const toggleRoleFilter = (role: Role) => {
+    setBanRoleFilter((prev) => (prev === role ? null : role));
+  };
+
   return (
-    <section className="flex flex-col gap-2">
-      <h3 className="text-center font-cinzel text-sm font-bold uppercase tracking-[0.25em] text-lol-gold">
-        {t('seriesBan')}
-      </h3>
+    <section className='flex flex-col gap-2'>
+      <div className='flex flex-wrap items-center justify-between gap-2'>
+        <div className='flex items-center gap-1' role='tablist' aria-label={t('filterByRole')}>
+          {(ROLES as Role[]).map((role) => (
+            <button
+              key={role}
+              type='button'
+              onClick={() => toggleRoleFilter(role)}
+              className={cn(
+                'flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border transition-all duration-200 sm:h-10 sm:w-10',
+                banRoleFilter === role
+                  ? 'border-lol-gold bg-lol-gold/20 ring-1 ring-lol-gold/50'
+                  : 'border-lol-border bg-lol-bg-card hover:border-lol-gold/50 hover:bg-lol-card/80',
+              )}
+              title={roleLabels[role]}
+              aria-pressed={banRoleFilter === role}
+            >
+              <RoleIcon role={role} size={20} className='opacity-90' />
+            </button>
+          ))}
+        </div>
+        <h3 className='font-cinzel text-sm font-bold uppercase tracking-[0.25em] text-lol-gold'>
+          {t('seriesBan')}
+        </h3>
+      </div>
 
       {games.length === 0 ? (
-        <div className="rounded-lg border border-lol-border bg-lol-bg-card/60 py-5 text-center">
-          <p className="lol-desc mb-2 text-lol-muted">{t('noBansYet')}</p>
-          <button type="button" onClick={addGame} className="lol-btn-primary rounded-lg py-2 px-4">
+        <div className='rounded-lg border border-lol-border bg-lol-bg-card/60 py-5 text-center'>
+          <p className='lol-desc mb-2 text-lol-muted'>{t('noBansYet')}</p>
+          <button type='button' onClick={addGame} className='lol-btn-primary rounded-lg py-2 px-4'>
             {t('addGameBans')}
           </button>
         </div>
       ) : (
         <>
           {games.map((game, gameIndex) => (
-            <div key={gameIndex} className="rounded-lg border border-lol-border bg-lol-bg-card/70">
-              <div className="flex items-center justify-between px-2.5 py-1.5">
-                <span className="font-cinzel text-xs font-bold uppercase tracking-wider text-lol-gold">
+            <div key={gameIndex} className='rounded-lg border border-lol-border bg-lol-bg-card/70'>
+              <div className='flex items-center justify-between px-2.5 py-1.5'>
+                <span className='font-cinzel text-xs font-bold uppercase tracking-wider text-lol-gold'>
                   {t('game')} {gameIndex + 1}
                 </span>
                 <button
-                  type="button"
+                  type='button'
                   onClick={() => resetGameBans(gameIndex)}
-                  className="lol-desc text-lol-muted hover:text-amber-400"
+                  className='lol-desc text-lol-muted hover:text-amber-400'
                   title={t('resetGameBansTitle')}
                 >
                   {t('resetGameBans')}
                 </button>
               </div>
-              <div className="grid grid-cols-1 gap-2 px-2.5 pb-2 sm:grid-cols-2">
+              <div className='grid grid-cols-1 gap-2 px-2.5 pb-2 sm:grid-cols-2'>
                 <TeamBanRow
                   teamLabel={t('blueTeamBan')}
                   selectedLabel={t('selected')}
                   emptySlotLabel={t('emptySlot')}
                   unbanLabel={t('unban')}
-                  teamColor="blue"
+                  teamColor='blue'
                   bans={ensureFive(game.blueBans)}
                   gameIndex={gameIndex}
                   pickingFor={pickingFor}
                   onSelectTeam={() => {
                     const idx = firstEmptySlot(game.blueBans);
-                    if (idx < SLOT_COUNT) setPickingFor({ gameIndex, team: 'blue', slotIndex: idx });
+                    if (idx < SLOT_COUNT)
+                      setPickingFor({ gameIndex, team: 'blue', slotIndex: idx });
                   }}
                   onClear={(slotIndex) => clearBan(gameIndex, 'blue', slotIndex)}
                 />
@@ -146,7 +186,7 @@ export default function SeriesBanList({ games, onUpdate }: SeriesBanListProps) {
                   selectedLabel={t('selected')}
                   emptySlotLabel={t('emptySlot')}
                   unbanLabel={t('unban')}
-                  teamColor="red"
+                  teamColor='red'
                   bans={ensureFive(game.redBans)}
                   gameIndex={gameIndex}
                   pickingFor={pickingFor}
@@ -158,95 +198,108 @@ export default function SeriesBanList({ games, onUpdate }: SeriesBanListProps) {
                 />
               </div>
               {/* 챔피언 선택 목록: 이 경기가 선택된 경우에만 표시 (다른 경기 선택 시 close) */}
-              {pickingFor?.gameIndex === gameIndex && (() => {
-                const blue = ensureFive(game.blueBans);
-                const red = ensureFive(game.redBans);
-                const bannedInThisGame = new Set([...blue, ...red].filter(Boolean));
-                const currentSlotValue = (pickingFor.team === 'blue' ? blue : red)[pickingFor.slotIndex]?.trim() ?? '';
-                if (currentSlotValue) bannedInThisGame.delete(currentSlotValue);
-                const filteredChampions = filterChampionsBySearch(banSearchQuery);
-                return (
-                <div className="border-t border-lol-border/70 px-2.5 py-1.5">
-                  <div className="mb-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                    <span className="lol-desc text-lol-muted">
-                      {t('selectChampion')} · {t('game')} {gameIndex + 1} ·{' '}
-                      {pickingFor.team === 'blue' ? t('teamBlue') : t('teamRed')} {t('slotLabel')} {pickingFor.slotIndex + 1}
-                    </span>
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="text"
-                        value={banSearchQuery}
-                        onChange={(e) => setBanSearchQuery(e.target.value)}
-                        placeholder={t('searchChampion')}
-                        className="lol-input w-full min-w-0 max-w-[200px] rounded-lg border border-lol-border bg-lol-bg-card px-3 py-1.5 text-sm transition-all duration-200 placeholder:text-lol-muted focus:border-lol-gold/60 focus:outline-none focus:ring-1 focus:ring-lol-gold/40 sm:max-w-[220px]"
-                        aria-label={t('searchChampion')}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setPickingFor(null)}
-                        className="lol-desc shrink-0 text-lol-muted transition-colors hover:text-lol-gold"
-                      >
-                        {t('cancelSelect')}
-                      </button>
-                    </div>
-                  </div>
-                  <div
-                    className="flex flex-wrap justify-center gap-1.5 overflow-y-auto transition-opacity duration-200"
-                    style={{ maxHeight: CHAMPION_LIST_HEIGHT }}
-                  >
-                    {filteredChampions.map(({ name }) => {
-                      const disabled = bannedInThisGame.has(name);
-                      return (
-                      <button
-                        key={name}
-                        type="button"
-                        disabled={disabled}
-                        onClick={() => handleSelect(name, gameIndex)}
-                        className={`series-ban-cell relative flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-lol-border bg-lol-card transition-all duration-200 ease-out hover:scale-[1.03] focus:outline-none focus:ring-2 focus:ring-lol-gold/50 sm:h-12 sm:w-12 ${
-                          disabled
-                            ? 'cursor-not-allowed scale-100 opacity-40 hover:scale-100'
-                            : 'hover:border-lol-gold/60 hover:bg-lol-card/90'
-                        }`}
-                        title={disabled ? `${name} (${t('alreadyBannedInGame')})` : name}
-                      >
-                        <img
-                          src={`/champion/${encodeURIComponent(name)}.webp`}
-                          alt=""
-                          className="absolute inset-0 h-full w-full object-cover object-top transition-opacity duration-200"
-                          onLoad={(e) =>
-                            e.currentTarget.closest('button')?.setAttribute('data-img-loaded', '')
-                          }
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).style.display = 'none';
-                          }}
-                        />
-                        <span className="series-ban-fallback absolute inset-0 flex items-center justify-center bg-lol-bg-card/90 text-xs font-medium text-lol-gold-bright">
-                          {name.length > 2 ? name.slice(0, 2) : name}
-                        </span>
-                      </button>
+              {pickingFor?.gameIndex === gameIndex &&
+                (() => {
+                  const blue = ensureFive(game.blueBans);
+                  const red = ensureFive(game.redBans);
+                  const bannedInThisGame = new Set([...blue, ...red].filter(Boolean));
+                  const currentSlotValue =
+                    (pickingFor.team === 'blue' ? blue : red)[pickingFor.slotIndex]?.trim() ?? '';
+                  if (currentSlotValue) bannedInThisGame.delete(currentSlotValue);
+                  let filteredChampions = filterChampionsBySearch(banSearchQuery);
+                  if (banRoleFilter) {
+                    filteredChampions = filteredChampions.filter(({ name }) =>
+                      isChampionInRole(name, banRoleFilter),
                     );
-                    })}
-                  </div>
-                  {filteredChampions.length === 0 && banSearchQuery.trim() && (
-                    <p className="lol-desc mt-2 text-center text-sm text-lol-muted">
-                      &quot;{banSearchQuery}&quot; — {t('searchNoResults')}
-                    </p>
-                  )}
-                </div>
-                );
-              })()}
+                  }
+                  return (
+                    <div className='border-t border-lol-border/70 px-2.5 py-1.5'>
+                      <div className='mb-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between'>
+                        <span className='lol-desc text-lol-muted'>
+                          {t('selectChampion')} · {t('game')} {gameIndex + 1} ·{' '}
+                          {pickingFor.team === 'blue' ? t('teamBlue') : t('teamRed')}{' '}
+                          {t('slotLabel')} {pickingFor.slotIndex + 1}
+                        </span>
+                        <div className='flex items-center gap-2'>
+                          <input
+                            type='text'
+                            value={banSearchQuery}
+                            onChange={(e) => setBanSearchQuery(e.target.value)}
+                            placeholder={t('searchChampion')}
+                            className='lol-input w-full min-w-0 max-w-[200px] rounded-lg border border-lol-border bg-lol-bg-card px-3 py-1.5 text-sm transition-all duration-200 placeholder:text-lol-muted focus:border-lol-gold/60 focus:outline-none focus:ring-1 focus:ring-lol-gold/40 sm:max-w-[220px]'
+                            aria-label={t('searchChampion')}
+                          />
+                          <button
+                            type='button'
+                            onClick={() => setPickingFor(null)}
+                            className='lol-desc shrink-0 text-lol-muted transition-colors hover:text-lol-gold'
+                          >
+                            {t('cancelSelect')}
+                          </button>
+                        </div>
+                      </div>
+                      <div
+                        className={cn(
+                          'flex flex-wrap justify-start content-start gap-1.5 overflow-y-auto transition-opacity duration-200',
+                          'h-[280px] min-h-[280px] max-h-[280px]',
+                        )}
+                      >
+                        {filteredChampions.map(({ name }) => {
+                          const disabled = bannedInThisGame.has(name);
+                          return (
+                            <button
+                              key={name}
+                              type='button'
+                              disabled={disabled}
+                              onClick={() => handleSelect(name, gameIndex)}
+                              className={cn(
+                                'series-ban-cell relative flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-lol-border bg-lol-card transition-all duration-200 ease-out focus:outline-none focus:ring-2 focus:ring-lol-gold/50 sm:h-12 sm:w-12',
+                                disabled
+                                  ? 'cursor-not-allowed scale-100 opacity-40 hover:scale-100'
+                                  : 'hover:scale-[1.03] hover:border-lol-gold/60 hover:bg-lol-card/90',
+                              )}
+                              title={disabled ? `${name} (${t('alreadyBannedInGame')})` : name}
+                            >
+                              <Image
+                                src={`/champion/${encodeURIComponent(name)}.webp`}
+                                alt=""
+                                width={48}
+                                height={48}
+                                className="relative z-10 h-full w-full object-cover object-top transition-opacity duration-200"
+                                onError={(e) => {
+                                  e.currentTarget.style.display = 'none';
+                                }}
+                              />
+                              <span className='series-ban-fallback absolute inset-0 z-0 flex items-center justify-center bg-lol-bg-card/90 text-xs font-medium text-lol-gold-bright'>
+                                {name.length > 2 ? name.slice(0, 2) : name}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                      {filteredChampions.length === 0 && (
+                        <p className='lol-desc mt-2 text-center text-sm text-lol-muted'>
+                          {banSearchQuery.trim()
+                            ? `"${banSearchQuery}" — ${t('searchNoResults')}`
+                            : banRoleFilter
+                              ? `${roleLabels[banRoleFilter]} — ${t('searchNoResults')}`
+                              : null}
+                        </p>
+                      )}
+                    </div>
+                  );
+                })()}
             </div>
           ))}
           <button
-            type="button"
+            type='button'
             onClick={addGame}
-            className="lol-btn-secondary w-full rounded-lg py-1.5 sm:w-auto sm:min-w-[140px]"
+            className='lol-btn-secondary w-full rounded-lg py-1.5 sm:w-auto sm:min-w-[140px]'
           >
             {t('addNextGameBans')}
           </button>
         </>
       )}
-
     </section>
   );
 }
@@ -276,25 +329,24 @@ function TeamBanRow({
 }) {
   const isBlue = teamColor === 'blue';
   const team: TeamKind = isBlue ? 'blue' : 'red';
-  const isSelected =
-    pickingFor?.gameIndex === gameIndex && pickingFor?.team === team;
+  const isSelected = pickingFor?.gameIndex === gameIndex && pickingFor?.team === team;
   return (
     <div
-      role="button"
+      role='button'
       tabIndex={0}
       onClick={onSelectTeam}
       onKeyDown={(e) => e.key === 'Enter' && onSelectTeam()}
-      className={`cursor-pointer rounded-lg p-2 transition-all ${
-        isBlue ? 'bg-lol-blue/25' : 'bg-lol-red/25'
-      } ${isBlue ? 'border-l border-lol-blue-border' : 'border-l border-lol-red-border'} ${
-        isSelected ? 'ring-1 ring-lol-gold/50' : ''
-      }`}
+      className={cn(
+        'cursor-pointer rounded-lg p-2 transition-all',
+        isBlue ? 'bg-lol-blue/25 border-l border-lol-blue-border' : 'bg-lol-red/25 border-l border-lol-red-border',
+        isSelected && 'ring-1 ring-lol-gold/50',
+      )}
     >
-      <p className="lol-desc mb-1 font-semibold text-lol-muted">
+      <p className='lol-desc mb-1 font-semibold text-lol-muted'>
         {teamLabel}
-        {isSelected && <span className="ml-1 text-lol-gold">{selectedLabel}</span>}
+        {isSelected && <span className='ml-1 text-lol-gold'>{selectedLabel}</span>}
       </p>
-      <div className="flex flex-wrap justify-center gap-1">
+      <div className='flex flex-wrap justify-center gap-1'>
         {bans.map((name, slotIndex) => (
           <BanSlot
             key={slotIndex}
@@ -326,37 +378,36 @@ function BanSlot({
   const filled = championName.trim() !== '';
 
   return (
-    <div className="relative">
+    <div className='relative'>
       <div
-        className="series-ban-cell relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-lol-border bg-lol-card transition-all sm:h-14 sm:w-14"
+        className='series-ban-cell relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-lol-border bg-lol-card transition-all sm:h-14 sm:w-14'
         title={filled ? championName : emptySlotLabel}
       >
         {filled ? (
           <>
-            <img
+            <Image
               src={`/champion/${encodeURIComponent(championName)}.webp`}
               alt=""
-              className="absolute inset-0 h-full w-full object-cover object-top"
-              onLoad={(e) =>
-                e.currentTarget.closest('.series-ban-cell')?.setAttribute('data-img-loaded', '')
-              }
+              width={56}
+              height={56}
+              className="relative z-10 h-full w-full object-cover object-top"
               onError={(e) => {
-                (e.target as HTMLImageElement).style.display = 'none';
+                e.currentTarget.style.display = 'none';
               }}
             />
-            <span className="series-ban-fallback absolute inset-0 flex items-center justify-center bg-lol-bg-card/90 text-xs font-medium text-lol-gold-bright">
+            <span className='series-ban-fallback absolute inset-0 z-0 flex items-center justify-center bg-lol-bg-card/90 text-xs font-medium text-lol-gold-bright'>
               {championName.length > 2 ? championName.slice(0, 2) : championName}
             </span>
           </>
         ) : (
-          <span className="text-2xl text-lol-muted/60">+</span>
+          <span className='text-2xl text-lol-muted/60'>+</span>
         )}
       </div>
       {filled && (
         <button
-          type="button"
+          type='button'
           onClick={onClear}
-          className="absolute -right-0.5 -top-0.5 z-30 flex h-4 w-4 items-center justify-center rounded-full bg-red-600 text-[10px] text-white hover:bg-red-500"
+          className='absolute -right-0.5 -top-0.5 z-30 flex h-4 w-4 items-center justify-center rounded-full bg-red-600 text-[10px] text-white hover:bg-red-500'
           aria-label={unbanLabel}
           title={unbanLabel}
         >

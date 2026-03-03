@@ -78,6 +78,7 @@ const translations = {
     championSelect: '챔피언 선택',
     searchChampion: '챔피언 검색 (한/영)',
     searchNoResults: '검색 결과 없음',
+    filterByRole: '역할군 필터',
   },
   en: {
     loading: 'Loading...',
@@ -142,6 +143,7 @@ const translations = {
     championSelect: 'Champion Select',
     searchChampion: 'Search champion (KO/EN)',
     searchNoResults: 'No results',
+    filterByRole: 'Filter by role',
   },
 } as const;
 

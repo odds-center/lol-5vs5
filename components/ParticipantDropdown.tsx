@@ -4,6 +4,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { Player } from '@/types';
 import { useTranslation } from '@/components/LanguageProvider';
+import { cn } from '@/lib/utils';
 
 interface ParticipantDropdownProps {
   slots: Player[];
@@ -107,9 +108,10 @@ export default function ParticipantDropdown({
               onChange('');
               setOpen(false);
             }}
-            className={`flex w-full min-w-0 items-center gap-2 whitespace-nowrap px-3 py-2 text-left text-sm transition-colors hover:bg-lol-bg-card ${
-              !value ? 'bg-lol-bg-card/80 text-lol-gold' : 'text-lol-gold-bright'
-            }`}
+            className={cn(
+              'flex w-full min-w-0 items-center gap-2 whitespace-nowrap px-3 py-2 text-left text-sm transition-colors hover:bg-lol-bg-card',
+              !value ? 'bg-lol-bg-card/80 text-lol-gold' : 'text-lol-gold-bright',
+            )}
           >
             {place}
           </button>
@@ -129,11 +131,13 @@ export default function ParticipantDropdown({
                     setOpen(false);
                   }
                 }}
-                className={`flex w-full min-w-0 items-center gap-2 whitespace-nowrap px-3 py-2 text-left text-sm transition-colors ${
+                className={cn(
+                  'flex w-full min-w-0 items-center gap-2 whitespace-nowrap px-3 py-2 text-left text-sm transition-colors',
                   isExcluded
                     ? 'cursor-not-allowed text-lol-muted opacity-50'
-                    : 'cursor-pointer text-lol-gold-bright hover:bg-lol-bg-card'
-                } ${isSelected ? 'bg-lol-bg-card/80' : ''}`}
+                    : 'cursor-pointer text-lol-gold-bright hover:bg-lol-bg-card',
+                  isSelected && 'bg-lol-bg-card/80',
+                )}
               >
                 <span className="lol-desc shrink-0 text-lol-muted">#{i + 1}</span>
                 <span className="min-w-0 flex-1 truncate">{optionLabel}</span>

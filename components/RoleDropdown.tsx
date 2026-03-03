@@ -6,6 +6,7 @@ import type { RolePreference } from '@/types';
 import { ROLES, type Role } from '@/types';
 import RoleIcon from './RoleIcon';
 import { useTranslation } from '@/components/LanguageProvider';
+import { cn } from '@/lib/utils';
 
 const ROLE_OPTIONS: RolePreference[] = ['', ...ROLES];
 
@@ -112,11 +113,13 @@ export default function RoleDropdown({
                   setOpen(false);
                 }
               }}
-              className={`flex w-full min-w-0 items-center gap-2 whitespace-nowrap px-3 py-2 text-left text-sm transition-colors ${
+              className={cn(
+                'flex w-full min-w-0 items-center gap-2 whitespace-nowrap px-3 py-2 text-left text-sm transition-colors',
                 isDisabled
                   ? 'cursor-not-allowed text-lol-muted opacity-60'
-                  : 'cursor-pointer text-lol-gold-bright hover:bg-lol-bg-card'
-              } ${isSelected ? 'bg-lol-bg-card/80' : ''}`}
+                  : 'cursor-pointer text-lol-gold-bright hover:bg-lol-bg-card',
+                isSelected && 'bg-lol-bg-card/80',
+              )}
             >
               <span className='inline-flex h-4 w-4 shrink-0 items-center justify-center'>
                 {isRole ? <RoleIcon role={r as Role} size={16} /> : null}
