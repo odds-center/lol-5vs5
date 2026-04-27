@@ -77,6 +77,7 @@ export default function ParticipantSlots({ slots, onChange }: ParticipantSlotsPr
                       slot.bannedRoles,
                     )
                   }
+                  tabIndex={i + 1}
                   placeholder={t('placeholderNickname')}
                   className='lol-input w-full min-w-[5rem] max-w-[140px] rounded-lg'
                 />
@@ -98,6 +99,7 @@ export default function ParticipantSlots({ slots, onChange }: ParticipantSlotsPr
                       slot.bannedRoles,
                     );
                   }}
+                  tabIndex={i + 11}
                   placeholder={t('placeholderMmr')}
                   className='lol-input min-w-[8rem] w-[8rem] rounded-lg'
                 />
