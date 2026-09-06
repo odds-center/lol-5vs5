@@ -41,10 +41,8 @@ function TeamCard({
   return (
     <div
       className={cn(
-        'lol-team-card overflow-hidden border',
-        isBlue
-          ? 'lol-team-card-blue border-lol-blue-border bg-lol-blue/60'
-          : 'lol-team-card-red border-lol-red-border bg-lol-red/60',
+        'lol-team-card overflow-hidden',
+        isBlue ? 'lol-team-card-blue' : 'lol-team-card-red',
       )}
     >
       <div className='border-b border-lol-border bg-gradient-to-b from-black/40 to-black/15 px-5 py-3'>
