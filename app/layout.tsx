@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Cinzel, Noto_Sans_KR } from 'next/font/google';
 import './globals.css';
 import { LanguageProvider } from '@/components/LanguageProvider';
+import { DialogProvider } from '@/components/DialogProvider';
 import { cn } from '@/lib/utils';
 
 const cinzel = Cinzel({
@@ -203,7 +204,9 @@ export default function RootLayout({
           type='application/ld+json'
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
-        <LanguageProvider>{children}</LanguageProvider>
+        <LanguageProvider>
+          <DialogProvider>{children}</DialogProvider>
+        </LanguageProvider>
       </body>
     </html>
   );
