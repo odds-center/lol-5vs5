@@ -29,6 +29,7 @@ import ParticipantSlots, {
 import SeriesDraftBoard from '@/components/SeriesDraftBoard';
 import TeamDivisionResult from '@/components/TeamDivisionResult';
 import { useTranslation } from '@/components/LanguageProvider';
+import { useDialog } from '@/components/DialogProvider';
 import { cn } from '@/lib/utils';
 
 type TabId = 'participants' | 'result' | 'bans';
@@ -57,6 +58,7 @@ function countValidMmr(players: Player[]): number {
 
 export default function Home() {
   const { t } = useTranslation();
+  const dialog = useDialog();
   const [players, setPlayersState] = useState<Player[]>([]);
   const [assignment, setAssignment] = useState<TeamAssignment | null>(null);
   const [seriesDraft, setSeriesDraftState] = useState<SeriesDraft>([]);
@@ -165,7 +167,7 @@ export default function Home() {
     persistPlayers(players.map((p) => ({ ...p, fixedTeam: undefined })));
   }, [players, persistPlayers]);
 
-  const handleDivideTeams = useCallback(() => {
+  const handleDivideTeams = useCallback(async () => {
     console.log('[관악구 피바라기] 버튼 클릭: 팀 나누기');
     if (countValidMmr(players) !== 10) {
       console.log('[관악구 피바라기] 팀 나누기 중단: MMR 유효 10명 아님');
@@ -175,7 +177,7 @@ export default function Home() {
     persistPlayers(filled);
     const valid = filled.filter((p) => p.name.trim() !== '' && !Number.isNaN(p.mmr) && p.mmr >= 0);
     if (valid.length !== 10) {
-      alert('팀 나누기 실패. 10명 모두 MMR을 입력했는지 확인하세요.');
+      await dialog.alert({ message: t('divideFailMmr') });
       return;
     }
     try {
@@ -187,9 +189,9 @@ export default function Home() {
       console.log('[관악구 피바라기] 팀 나누기 완료, 결과 탭으로 이동');
     } catch (e) {
       console.error('[관악구 피바라기] 팀 나누기 예외:', e);
-      alert(e instanceof Error ? e.message : '팀 나누기 실패.');
+      await dialog.alert({ message: e instanceof Error ? e.message : t('divideFail') });
     }
-  }, [players, linkedPairs, persistPlayers, persistAssignment]);
+  }, [players, linkedPairs, persistPlayers, persistAssignment, dialog, t]);
 
   const handleAssignRoles = useCallback(() => {
     console.log('[관악구 피바라기] 버튼 클릭: 역할 랜덤 배정 / 역할만 다시 랜덤');
@@ -226,8 +228,14 @@ export default function Home() {
   }, [assignment]);
 
   /** 완전 초기화: localStorage 삭제, 참가자·밴 목록·배정 결과 제거, 참가자 탭으로 */
-  const handleFullReset = useCallback(() => {
-    if (!window.confirm('모든 참가자, 같은 팀 지정, 밴 목록, 팀 결과가 삭제됩니다. 정말 초기화할까요?')) return;
+  const handleFullReset = useCallback(async () => {
+    const ok = await dialog.confirm({
+      title: t('fullReset'),
+      message: t('fullResetConfirm'),
+      confirmLabel: t('fullReset'),
+      danger: true,
+    });
+    if (!ok) return;
     console.log('[관악구 피바라기] 완전 초기화');
     clearAllStorage();
     const empty = getDefaultPlayers();
@@ -238,7 +246,7 @@ export default function Home() {
     setFearlessModeState('off');
     setLinkedPairsState([]);
     setActiveTab('participants');
-  }, []);
+  }, [dialog, t]);
 
   /** 시리즈 밴픽 변경 (로컬 저장) */
   const handleSeriesDraftUpdate = useCallback((next: SeriesDraft) => {
@@ -253,7 +261,7 @@ export default function Home() {
   }, []);
 
   /** 참가자 명단(10명)을 랜덤 셔플해 1팀·2팀 재구성. 누를 때마다 다른 조합 */
-  const handleRedivide = useCallback(() => {
+  const handleRedivide = useCallback(async () => {
     console.log('[관악구 피바라기] 버튼 클릭: 다시 나누기');
     const currentPlayers = playersRef.current;
     if (countValidMmr(currentPlayers) !== 10) return;
@@ -270,9 +278,9 @@ export default function Home() {
       console.log('[관악구 피바라기] 다시 나누기 완료 (랜덤 1팀·2팀)');
     } catch (e) {
       console.error('[관악구 피바라기] 다시 나누기 예외:', e);
-      alert(e instanceof Error ? e.message : '다시 나누기 실패.');
+      await dialog.alert({ message: e instanceof Error ? e.message : t('redivideFail') });
     }
-  }, [linkedPairs, persistPlayers]);
+  }, [linkedPairs, persistPlayers, dialog, t]);
 
   if (!mounted) {
     return (

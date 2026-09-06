@@ -15,6 +15,7 @@ import {
 } from '@/lib/fearless';
 import Image from 'next/image';
 import { useTranslation } from '@/components/LanguageProvider';
+import { useDialog } from '@/components/DialogProvider';
 import { cn } from '@/lib/utils';
 import { preloadChampionImages } from '@/lib/preload';
 import RoleIcon from './RoleIcon';
@@ -60,6 +61,7 @@ export default function SeriesDraftBoard({
   onFearlessModeChange,
 }: SeriesDraftBoardProps) {
   const { t, roleLabels } = useTranslation();
+  const dialog = useDialog();
   const [pickingFor, setPickingFor] = useState<PickingFor | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState<Role | null>(null);
@@ -111,6 +113,20 @@ export default function SeriesDraftBoard({
   /** 해당 경기의 밴·픽 전부 비우기 */
   const resetGame = (gameIndex: number) => {
     onUpdate(games.map((g, i) => (i === gameIndex ? emptyGame() : g)));
+    setPickingFor(null);
+  };
+
+  /** 모든 경기 삭제. 되돌릴 수 없으므로 확인 후 진행 */
+  const resetAllGames = async () => {
+    const ok = await dialog.confirm({
+      title: t('resetAllGames'),
+      message: t('resetAllGamesConfirm'),
+      confirmLabel: t('resetAllGames'),
+      danger: true,
+    });
+    if (!ok) return;
+    console.log('[관악구 피바라기] 버튼 클릭: 밴픽 모두 초기화');
+    onUpdate([]);
     setPickingFor(null);
   };
 
@@ -240,13 +256,23 @@ export default function SeriesDraftBoard({
               )}
             </div>
           ))}
-          <button
-            type='button'
-            onClick={addGame}
-            className='lol-btn-secondary w-full rounded-lg py-1.5 sm:w-auto sm:min-w-[140px]'
-          >
-            {t('addNextGameBans')}
-          </button>
+          <div className='flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between'>
+            <button
+              type='button'
+              onClick={addGame}
+              className='lol-btn-secondary w-full py-1.5 sm:w-auto sm:min-w-[140px]'
+            >
+              {t('addNextGameBans')}
+            </button>
+            <button
+              type='button'
+              onClick={resetAllGames}
+              title={t('resetAllGamesTitle')}
+              className='lol-btn-secondary lol-btn-danger w-full py-1.5 sm:w-auto sm:min-w-[120px]'
+            >
+              {t('resetAllGames')}
+            </button>
+          </div>
         </>
       )}
     </section>

@@ -203,9 +203,43 @@ body {
     background-color: color-mix(in srgb, var(--lol-card) 85%, var(--lol-gold));
     --ring-color: color-mix(in srgb, var(--lol-gold) 55%, transparent);
   }
+  /* 파괴적 동작용 secondary 변형 (전체 삭제 등) */
+  .lol-btn-secondary.lol-btn-danger {
+    color: color-mix(in srgb, #ef4444 65%, var(--lol-muted));
+    --ring-color: color-mix(in srgb, #ef4444 35%, var(--lol-border));
+  }
+  .lol-btn-secondary.lol-btn-danger:hover:not(:disabled) {
+    color: #fca5a5;
+    background-color: color-mix(in srgb, var(--lol-card) 82%, #ef4444);
+    --ring-color: color-mix(in srgb, #ef4444 60%, transparent);
+  }
   .lol-btn-secondary:disabled {
     opacity: 0.35;
     cursor: not-allowed;
+  }
+
+  /* 확인/알림 모달: 패널과 같은 헥스텍 프레임 */
+  .lol-dialog {
+    position: relative;
+    clip-path: var(--bevel-md);
+    background: linear-gradient(
+      150deg,
+      var(--lol-gold) 0%,
+      var(--lol-gold-deep) 25%,
+      var(--lol-border-light) 50%,
+      var(--lol-gold-deep) 75%,
+      var(--lol-gold) 100%
+    );
+    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.7);
+  }
+  .lol-dialog-inner {
+    clip-path: var(--bevel-md-in);
+    background:
+      radial-gradient(ellipse 120% 60% at 50% 0%, rgba(200, 170, 110, 0.08), transparent 60%),
+      linear-gradient(180deg, var(--lol-bg-card) 0%, var(--lol-card) 100%);
+    margin: 1px;
+    padding: 1.5rem;
+    text-align: center;
   }
 
   /* 팀 카드: 각진 컷 + 팀 색 글로우. 테두리는 링으로 컷을 따라 그림 */
