@@ -41,13 +41,11 @@ function TeamCard({
   return (
     <div
       className={cn(
-        'overflow-hidden rounded-xl border-2 shadow-lg',
-        isBlue
-          ? 'border-lol-blue-border bg-lol-blue/50 shadow-[0_0_0_1px_rgba(14,40,66,0.5)_inset,0_4px_14px_rgba(0,0,0,0.3)]'
-          : 'border-lol-red-border bg-lol-red/50 shadow-[0_0_0_1px_rgba(74,40,32,0.5)_inset,0_4px_14px_rgba(0,0,0,0.3)]',
+        'lol-team-card overflow-hidden',
+        isBlue ? 'lol-team-card-blue' : 'lol-team-card-red',
       )}
     >
-      <div className='border-b border-lol-border bg-black/25 px-5 py-3'>
+      <div className='border-b border-lol-border bg-gradient-to-b from-black/40 to-black/15 px-5 py-3'>
         <div className='flex items-center justify-between'>
           <h3 className='font-cinzel text-sm font-bold uppercase tracking-[0.2em] text-lol-gold'>
             {title}

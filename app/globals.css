@@ -15,6 +15,41 @@
   --lol-blue-border: #0e2842;
   --lol-red: #2c1810;
   --lol-red-border: #4a2820;
+
+  /* Riot 공식 팔레트 계열 액센트 */
+  --lol-gold-deep: #785a28;
+  --lol-gold-darker: #463714;
+  --lol-gold-light: #f0e6d2;
+  --lol-hextech: #0ac8b9;
+  --lol-hextech-dim: #0397ab;
+
+  /* LoL 클라이언트 특유의 모서리 사선 컷 */
+  --bevel-sm: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px);
+  --bevel-md: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+  --bevel-lg: polygon(18px 0, 100% 0, 100% calc(100% - 18px), calc(100% - 18px) 100%, 0 100%, 0 18px);
+  /* inset:1px 로 축소한 안쪽 도형용. 45° 컷은 1px 안쪽으로 밀면 변이 약 0.6px 짧아짐 */
+  --bevel-sm-in: polygon(5px 0, 100% 0, 100% calc(100% - 5px), calc(100% - 5px) 100%, 0 100%, 0 5px);
+  --bevel-md-in: polygon(9px 0, 100% 0, 100% calc(100% - 9px), calc(100% - 9px) 100%, 0 100%, 0 9px);
+  --bevel-lg-in: polygon(17px 0, 100% 0, 100% calc(100% - 17px), calc(100% - 17px) 100%, 0 100%, 0 17px);
+
+  /*
+   * 사선 컷을 따라가는 1px 테두리용 링.
+   * clip-path가 border를 잘라내 대각선 구간에 테두리가 남지 않으므로,
+   * 바깥 6변과 1px 안쪽 6변을 한 polygon에 넣고 evenodd로 가운데를 비워 직접 그린다.
+   * 주의: 중첩 var()는 선언한 곳(:root)에서 값이 굳으므로 컷 크기는 리터럴로 둔다.
+   */
+  --ring-path-sm: polygon(
+    evenodd,
+    6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px,
+    6px 1px, 1px 6px, 1px calc(100% - 1px), calc(100% - 6px) calc(100% - 1px),
+    calc(100% - 1px) calc(100% - 6px), calc(100% - 1px) 1px
+  );
+  --ring-path-md: polygon(
+    evenodd,
+    10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px,
+    10px 1px, 1px 10px, 1px calc(100% - 1px), calc(100% - 10px) calc(100% - 1px),
+    calc(100% - 1px) calc(100% - 10px), calc(100% - 1px) 1px
+  );
   font-size: 16px;
 }
 
@@ -94,32 +129,173 @@ body {
     transition: all 0.15s;
   }
   .lol-btn-primary {
-    background-color: color-mix(in srgb, var(--lol-gold) 20%, transparent);
-    color: var(--lol-gold);
-    border: 1px solid color-mix(in srgb, var(--lol-gold) 50%, transparent);
+    position: relative;
+    border-radius: 0;
+    border: none;
+    clip-path: var(--bevel-sm);
+    background: linear-gradient(180deg, rgba(200, 170, 110, 0.22), rgba(120, 90, 40, 0.28));
+    color: var(--lol-gold-light);
     padding: 0.625rem 1.25rem;
+    font-family: var(--font-cinzel), serif;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
     cursor: pointer;
+    --ring-color: var(--lol-gold-deep);
+    transition:
+      background 0.2s,
+      box-shadow 0.2s,
+      transform 0.12s;
+  }
+  .lol-btn-primary::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background: var(--ring-color);
+    clip-path: var(--ring-path-sm);
+    transition: background 0.2s;
   }
   .lol-btn-primary:hover:not(:disabled) {
-    background-color: color-mix(in srgb, var(--lol-gold) 30%, transparent);
-    border-color: var(--lol-gold);
-    box-shadow: 0 0 12px color-mix(in srgb, var(--lol-gold) 25%, transparent);
+    background: linear-gradient(180deg, rgba(200, 170, 110, 0.38), rgba(120, 90, 40, 0.4));
+    --ring-color: var(--lol-gold);
+    box-shadow: 0 0 18px color-mix(in srgb, var(--lol-gold) 30%, transparent);
+  }
+  .lol-btn-primary:active:not(:disabled) {
+    transform: translateY(1px);
   }
   .lol-btn-primary:disabled {
-    opacity: 0.4;
+    opacity: 0.35;
     cursor: not-allowed;
+    filter: grayscale(0.5);
   }
   .lol-btn-secondary {
+    position: relative;
+    border-radius: 0;
+    border: none;
+    clip-path: var(--bevel-sm);
     background-color: var(--lol-card);
     color: var(--lol-muted);
-    border: 1px solid var(--lol-border);
     padding: 0.5rem 1rem;
+    font-family: var(--font-cinzel), serif;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
     cursor: pointer;
+    --ring-color: var(--lol-border);
+    transition:
+      color 0.2s,
+      background-color 0.2s;
   }
-  .lol-btn-secondary:hover {
-    border-color: color-mix(in srgb, var(--lol-gold) 50%, transparent);
+  .lol-btn-secondary::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background: var(--ring-color);
+    clip-path: var(--ring-path-sm);
+    transition: background 0.2s;
+  }
+  .lol-btn-secondary:hover:not(:disabled) {
     color: var(--lol-gold);
-    background-color: color-mix(in srgb, var(--lol-card) 90%, var(--lol-bg-card));
+    background-color: color-mix(in srgb, var(--lol-card) 85%, var(--lol-gold));
+    --ring-color: color-mix(in srgb, var(--lol-gold) 55%, transparent);
+  }
+  /* 파괴적 동작용 secondary 변형 (전체 삭제 등) */
+  .lol-btn-secondary.lol-btn-danger {
+    color: color-mix(in srgb, #ef4444 65%, var(--lol-muted));
+    --ring-color: color-mix(in srgb, #ef4444 35%, var(--lol-border));
+  }
+  .lol-btn-secondary.lol-btn-danger:hover:not(:disabled) {
+    color: #fca5a5;
+    background-color: color-mix(in srgb, var(--lol-card) 82%, #ef4444);
+    --ring-color: color-mix(in srgb, #ef4444 60%, transparent);
+  }
+  .lol-btn-secondary:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+
+  /* 확인/알림 모달: 패널과 같은 헥스텍 프레임 */
+  .lol-dialog {
+    position: relative;
+    clip-path: var(--bevel-md);
+    background: linear-gradient(
+      150deg,
+      var(--lol-gold) 0%,
+      var(--lol-gold-deep) 25%,
+      var(--lol-border-light) 50%,
+      var(--lol-gold-deep) 75%,
+      var(--lol-gold) 100%
+    );
+    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.7);
+  }
+  .lol-dialog-inner {
+    clip-path: var(--bevel-md-in);
+    background:
+      radial-gradient(ellipse 120% 60% at 50% 0%, rgba(200, 170, 110, 0.08), transparent 60%),
+      linear-gradient(180deg, var(--lol-bg-card) 0%, var(--lol-card) 100%);
+    margin: 1px;
+    padding: 1.5rem;
+    text-align: center;
+  }
+
+  /* 팀 카드: 각진 컷 + 팀 색 글로우. 테두리는 링으로 컷을 따라 그림 */
+  .lol-team-card {
+    position: relative;
+    clip-path: var(--bevel-md);
+    transition: box-shadow 0.25s;
+  }
+  .lol-team-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background: var(--ring-color);
+    clip-path: var(--ring-path-md);
+  }
+  .lol-team-card-blue {
+    background: color-mix(in srgb, var(--lol-blue) 60%, transparent);
+    --ring-color: color-mix(in srgb, var(--lol-hextech-dim) 45%, var(--lol-blue-border));
+    box-shadow:
+      0 10px 34px rgba(0, 0, 0, 0.45),
+      0 0 40px rgba(3, 151, 171, 0.1);
+  }
+  .lol-team-card-red {
+    background: color-mix(in srgb, var(--lol-red) 60%, transparent);
+    --ring-color: color-mix(in srgb, #c85a3c 45%, var(--lol-red-border));
+    box-shadow:
+      0 10px 34px rgba(0, 0, 0, 0.45),
+      0 0 40px rgba(200, 90, 60, 0.1);
+  }
+
+  /* 챔피언 셀도 같은 사선 컷 (테두리는 Tailwind border, 컷이 작아 티나지 않음) */
+  .series-ban-cell {
+    clip-path: var(--bevel-sm);
+  }
+
+  /* 등장 애니메이션 */
+  @keyframes lol-fade-up {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  .lol-animate-in {
+    animation: lol-fade-up 0.35s ease-out both;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .lol-animate-in {
+      animation: none;
+    }
   }
 
   .lol-card {
@@ -130,22 +306,125 @@ body {
     box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.3);
   }
 
-  /* 중앙 패널: 리그 오브 레전드 클라이언트 스타일 프레임 */
+  /*
+   * 중앙 패널: 리그 오브 레전드 클라이언트 스타일 헥스텍 프레임.
+   * clip-path는 border까지 잘라내고 border는 사각형 4변에만 그려지므로,
+   * 사선 컷 구간에는 테두리가 남지 않는다. 그래서 바깥 도형 전체를 골드로 칠하고
+   * 1px 안쪽으로 축소한 도형을 배경색으로 덮어 테두리가 컷을 따라가게 만든다.
+   */
   .lol-panel {
-    border-radius: 0.75rem;
-    border: 1px solid var(--lol-border);
-    border-top: 3px solid var(--lol-gold);
-    background: linear-gradient(180deg, var(--lol-bg-card) 0%, var(--lol-card) 100%);
+    position: relative;
+    clip-path: var(--bevel-lg);
+    background: linear-gradient(
+      150deg,
+      var(--lol-gold) 0%,
+      var(--lol-gold-deep) 20%,
+      var(--lol-border-light) 48%,
+      var(--lol-gold-deep) 76%,
+      var(--lol-gold) 100%
+    );
     box-shadow:
-      0 0 0 1px rgba(0, 0, 0, 0.4) inset,
-      0 4px 24px rgba(0, 0, 0, 0.5),
-      0 1px 0 var(--lol-border-light) inset,
-      0 -1px 0 color-mix(in srgb, var(--lol-gold) 15%, transparent);
+      0 18px 60px rgba(0, 0, 0, 0.65),
+      0 0 90px rgba(10, 200, 185, 0.04);
+  }
+  /* 실제 패널 배경. z-index:-1 이라 패널 배경(골드) 위, 콘텐츠 아래에 깔린다 */
+  .lol-panel::before {
+    content: '';
+    position: absolute;
+    inset: 1px;
+    clip-path: var(--bevel-lg-in);
+    background:
+      radial-gradient(ellipse 120% 50% at 50% 0%, rgba(200, 170, 110, 0.07), transparent 60%),
+      linear-gradient(180deg, var(--lol-bg-card) 0%, var(--lol-card) 100%);
+    z-index: -1;
+  }
+  /* 상단 골드 하이라이트 바 — 사선 컷을 피해 18px 지점부터 */
+  .lol-panel::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 18px;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      var(--lol-gold) 18%,
+      var(--lol-gold-light) 50%,
+      var(--lol-gold) 82%,
+      transparent
+    );
+    opacity: 0.85;
+    pointer-events: none;
+    z-index: 1;
   }
 
   .lol-panel-header {
+    position: relative;
     border-bottom: 1px solid var(--lol-border);
     letter-spacing: 0.05em;
+    background:
+      radial-gradient(ellipse 80% 120% at 50% 0%, rgba(200, 170, 110, 0.09), transparent 70%);
+  }
+
+  /* 골드 그라데이션 제목 (LoL의 금색은 단색이 아니라 그라데이션) */
+  .lol-title-gold {
+    background: linear-gradient(
+      180deg,
+      var(--lol-gold-light) 0%,
+      var(--lol-gold) 45%,
+      var(--lol-gold-deep) 100%
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    text-shadow: 0 2px 18px rgba(200, 170, 110, 0.18);
+  }
+
+  /* 중앙 다이아몬드가 있는 장식 구분선 */
+  .lol-ornament {
+    position: relative;
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      color-mix(in srgb, var(--lol-gold) 45%, transparent) 30%,
+      color-mix(in srgb, var(--lol-gold) 45%, transparent) 70%,
+      transparent
+    );
+  }
+  .lol-ornament::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 7px;
+    height: 7px;
+    transform: translate(-50%, -50%) rotate(45deg);
+    background: var(--lol-bg-card);
+    border: 1px solid var(--lol-gold);
+    box-shadow: 0 0 8px color-mix(in srgb, var(--lol-gold) 40%, transparent);
+  }
+
+  /* 클라이언트 스타일 탭 */
+  .lol-tab {
+    position: relative;
+    transition:
+      color 0.2s,
+      background-color 0.2s;
+  }
+  .lol-tab[aria-selected='true'] {
+    background: linear-gradient(180deg, transparent, rgba(200, 170, 110, 0.1));
+  }
+  .lol-tab[aria-selected='true']::after {
+    content: '';
+    position: absolute;
+    left: 12%;
+    right: 12%;
+    bottom: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--lol-gold), transparent);
+    box-shadow: 0 0 10px color-mix(in srgb, var(--lol-gold) 60%, transparent);
   }
 
   .lol-section-title {
@@ -174,7 +453,18 @@ body::before {
   background:
     radial-gradient(ellipse 100% 60% at 50% 0%, rgba(20, 45, 70, 0.4), transparent 55%),
     radial-gradient(ellipse 80% 40% at 50% 100%, rgba(15, 25, 40, 0.35), transparent 50%),
+    radial-gradient(ellipse 60% 35% at 50% 0%, rgba(200, 170, 110, 0.06), transparent 60%),
     linear-gradient(180deg, #060a10 0%, #0a0e17 30%, #0a0e17 100%);
   pointer-events: none;
   z-index: 0;
+}
+
+/* 화면 가장자리 비네트 — 중앙 패널로 시선을 모음 */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(ellipse 75% 65% at 50% 45%, transparent 55%, rgba(0, 0, 0, 0.55) 100%);
+  pointer-events: none;
+  z-index: 1;
 }

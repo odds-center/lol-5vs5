@@ -12,6 +12,9 @@ export const ROLE_LABELS: Record<Role, string> = {
 
 export type RolePreference = Role | '';
 
+/** 미리 정해진 팀 고정. 'A' = 1팀(블루), 'B' = 2팀(레드), '' = 미정 */
+export type FixedTeam = 'A' | 'B' | '';
+
 export interface Player {
   id: string;
   name: string;
@@ -20,6 +23,8 @@ export interface Player {
   rolePreference?: RolePreference;
   /** 배정 시 제외할 포지션 (이 라인에는 절대 배정되지 않음) */
   bannedRoles?: Role[];
+  /** 팀이 미리 정해진 경우 고정할 팀 (없으면 자동 분배) */
+  fixedTeam?: FixedTeam;
   createdAt?: number;
 }
 
@@ -31,14 +36,28 @@ export interface TeamAssignment {
   createdAt: number;
 }
 
-/** 한 경기당 블루팀 5밴, 레드팀 5밴 */
-export interface GameBans {
+export type TeamKind = 'blue' | 'red';
+
+/** 한 경기의 밴·픽 기록. 각 배열은 5칸 (빈 칸은 '') */
+export interface GameDraft {
   blueBans: string[];
   redBans: string[];
+  bluePicks: string[];
+  redPicks: string[];
 }
 
-/** 시리즈 전체 밴: 1경기, 2경기, … 순서 */
-export type SeriesBans = GameBans[];
+/** 시리즈 전체 밴픽: 1경기, 2경기, … 순서 */
+export type SeriesDraft = GameDraft[];
+
+/**
+ * 피어리스 규칙.
+ * - off:  사용 안 함
+ * - half: 하프 피어리스 — 자기 팀이 이전 경기에서 픽한 챔피언만 잠김
+ * - full: 풀 피어리스 — 양 팀이 이전 경기에서 픽한 챔피언 전부 잠김
+ */
+export type FearlessMode = 'off' | 'half' | 'full';
+
+export const FEARLESS_MODES: FearlessMode[] = ['off', 'half', 'full'];
 
 /** 반드시 같은 팀에 넣을 참가자 쌍 (player id 2개). [id1, id2] 순서 무관 */
 export type LinkedPairs = [string, string][];

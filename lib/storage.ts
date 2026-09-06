@@ -1,4 +1,5 @@
-import type { GameBans, LinkedPairs, Player, SeriesBans, TeamAssignment } from '@/types';
+import type { FearlessMode, GameDraft, LinkedPairs, Player, SeriesDraft, TeamAssignment } from '@/types';
+import { ensureFive, emptyGame } from '@/lib/fearless';
 
 const EMPTY_SLOT: Omit<Player, 'id'> = { name: '', mmr: 1000, rolePreference: '' };
 
@@ -6,6 +7,7 @@ const PLAYERS_KEY = 'lol-5vs5-players';
 const ASSIGNMENT_KEY = 'lol-5vs5-last-assignment';
 const SERIES_BANS_KEY = 'lol-5vs5-series-bans';
 const LINKED_PAIRS_KEY = 'lol-5vs5-linked-pairs';
+const FEARLESS_MODE_KEY = 'lol-5vs5-fearless-mode';
 
 function isClient(): boolean {
   return typeof window !== 'undefined';
@@ -66,47 +68,71 @@ export function clearAllStorage(): void {
     localStorage.removeItem(ASSIGNMENT_KEY);
     localStorage.removeItem(SERIES_BANS_KEY);
     localStorage.removeItem(LINKED_PAIRS_KEY);
+    localStorage.removeItem(FEARLESS_MODE_KEY);
   } catch {
     // ignore
   }
 }
 
-function isValidGameBans(x: unknown): x is GameBans {
-  if (!x || typeof x !== 'object') return false;
-  const o = x as Record<string, unknown>;
-  return (
-    Array.isArray(o.blueBans) &&
-    o.blueBans.every((s) => typeof s === 'string') &&
-    Array.isArray(o.redBans) &&
-    o.redBans.every((s) => typeof s === 'string')
-  );
+function isStringArray(x: unknown): x is string[] {
+  return Array.isArray(x) && x.every((s) => typeof s === 'string');
 }
 
-/** 시리즈 밴 목록 (경기별 블루 5 + 레드 5). 구 형식(string[]) 마이그레이션 지원 */
-export function getSeriesBans(): SeriesBans {
+/** 구 형식({blueBans, redBans})은 빈 픽 배열을 채워 넣어 그대로 살림 */
+function toGameDraft(x: unknown): GameDraft | null {
+  if (!x || typeof x !== 'object') return null;
+  const o = x as Record<string, unknown>;
+  if (!isStringArray(o.blueBans) || !isStringArray(o.redBans)) return null;
+  return {
+    blueBans: ensureFive(o.blueBans),
+    redBans: ensureFive(o.redBans),
+    bluePicks: ensureFive(isStringArray(o.bluePicks) ? o.bluePicks : []),
+    redPicks: ensureFive(isStringArray(o.redPicks) ? o.redPicks : []),
+  };
+}
+
+/** 시리즈 밴픽 (경기별 블루/레드 각 5밴 5픽). 구 형식 2종 마이그레이션 지원 */
+export function getSeriesDraft(): SeriesDraft {
   if (!isClient()) return [];
   try {
     const raw = localStorage.getItem(SERIES_BANS_KEY);
     if (!raw) return [];
     const parsed = JSON.parse(raw) as unknown;
-    if (Array.isArray(parsed) && parsed.every(isValidGameBans)) return parsed as SeriesBans;
-    // 구 형식: string[] → 1경기에 블루 5 + 레드 5로 분배
-    if (Array.isArray(parsed) && parsed.every((x) => typeof x === 'string')) {
-      const names = parsed as string[];
-      const blue = names.slice(0, 5);
-      const red = names.slice(5, 10);
-      return [{ blueBans: blue, redBans: red }];
+    if (!Array.isArray(parsed)) return [];
+    // 최구 형식: string[] → 1경기에 블루 5밴 + 레드 5밴으로 분배
+    if (isStringArray(parsed)) {
+      return [{ ...emptyGame(), blueBans: ensureFive(parsed.slice(0, 5)), redBans: ensureFive(parsed.slice(5, 10)) }];
     }
-    return [];
+    const games = parsed.map(toGameDraft);
+    return games.every((g): g is GameDraft => g !== null) ? games : [];
   } catch {
     return [];
   }
 }
 
-export function setSeriesBans(bans: SeriesBans): void {
+export function setSeriesDraft(draft: SeriesDraft): void {
   if (!isClient()) return;
   try {
-    localStorage.setItem(SERIES_BANS_KEY, JSON.stringify(bans));
+    localStorage.setItem(SERIES_BANS_KEY, JSON.stringify(draft));
+  } catch {
+    // ignore
+  }
+}
+
+export function getFearlessMode(): FearlessMode {
+  if (!isClient()) return 'off';
+  try {
+    const raw = localStorage.getItem(FEARLESS_MODE_KEY);
+    return raw === 'half' || raw === 'full' ? raw : 'off';
+  } catch {
+    return 'off';
+  }
+}
+
+export function setFearlessMode(mode: FearlessMode): void {
+  if (!isClient()) return;
+  try {
+    localStorage.setItem(FEARLESS_MODE_KEY, mode);
   } catch {
     // ignore
   }

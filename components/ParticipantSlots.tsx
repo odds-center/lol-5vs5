@@ -1,8 +1,9 @@
 'use client';
 
-import type { Player, RolePreference } from '@/types';
+import type { FixedTeam, Player } from '@/types';
 import { ROLES, type Role } from '@/types';
-import RoleIcon from './RoleIcon';
+import { TEAM_SIZE } from '@/lib/teamAlgorithm';
+import FixedTeamPicker from './FixedTeamPicker';
 import RoleDropdown from './RoleDropdown';
 import { useTranslation } from '@/components/LanguageProvider';
 
@@ -13,26 +14,32 @@ function countRoleExcept(slots: Player[], role: Role, exceptIndex: number): numb
   return slots.filter((s, i) => i !== exceptIndex && (s.rolePreference ?? '') === role).length;
 }
 
+/** 팀 고정 인원 수 (해당 슬롯 제외). 한 팀에 5명까지만 고정 가능 */
+function countFixedTeamExcept(slots: Player[], team: FixedTeam, exceptIndex: number): number {
+  return slots.filter((s, i) => i !== exceptIndex && (s.fixedTeam ?? '') === team).length;
+}
+
 /** 역할이 꽉 찼을 때, 그 역할을 가진 다른 한 명을 미정으로 바꿀 때 사용 */
 export type SlotChangeBump = { index: number; rolePreference: '' };
 
+/** 슬롯 한 줄에서 바뀐 값만 담은 패치 */
+export type SlotPatch = Partial<
+  Pick<Player, 'name' | 'mmr' | 'rolePreference' | 'bannedRoles' | 'fixedTeam'>
+>;
+
 interface ParticipantSlotsProps {
   slots: Player[];
-  onChange: (
-    index: number,
-    name: string,
-    mmr: number,
-    rolePreference: RolePreference,
-    bump?: SlotChangeBump,
-    bannedRoles?: Role[],
-  ) => void;
+  onChange: (index: number, patch: SlotPatch, bump?: SlotChangeBump) => void;
 }
 
 export default function ParticipantSlots({ slots, onChange }: ParticipantSlotsProps) {
   const { t, roleLabels } = useTranslation();
+  const fixedA = slots.filter((s) => (s.fixedTeam ?? '') === 'A').length;
+  const fixedB = slots.filter((s) => (s.fixedTeam ?? '') === 'B').length;
+
   return (
     <div className='overflow-x-auto rounded-xl border border-lol-border bg-lol-bg-card/80 shadow-inner'>
-      <table className='w-full min-w-[640px] border-collapse whitespace-nowrap text-base'>
+      <table className='w-full min-w-[820px] border-collapse whitespace-nowrap text-base'>
         <thead>
           <tr className='border-b border-lol-border bg-gradient-to-r from-lol-card/90 to-lol-bg-card/90'>
             <th className='whitespace-nowrap py-2 pl-3 pr-1.5 text-left font-cinzel text-sm font-semibold uppercase tracking-[0.15em] text-lol-gold'>
@@ -43,6 +50,12 @@ export default function ParticipantSlots({ slots, onChange }: ParticipantSlotsPr
             </th>
             <th className='whitespace-nowrap py-2 px-1.5 text-left font-cinzel text-sm font-semibold uppercase tracking-[0.15em] text-lol-gold'>
               MMR
+            </th>
+            <th className='whitespace-nowrap py-2 px-1.5 text-left font-cinzel text-sm font-semibold uppercase tracking-[0.15em] text-lol-gold'>
+              {t('fixedTeamCol')}
+              <span className='lol-desc ml-1.5 font-spiegel font-normal normal-case tracking-normal text-lol-muted'>
+                ({t('team1')} {fixedA}/{TEAM_SIZE} · {t('team2')} {fixedB}/{TEAM_SIZE})
+              </span>
             </th>
             <th className='whitespace-nowrap py-2 pl-1.5 pr-1.5 text-left font-cinzel text-sm font-semibold uppercase tracking-[0.15em] text-lol-gold'>
               {t('role')}
@@ -67,16 +80,7 @@ export default function ParticipantSlots({ slots, onChange }: ParticipantSlotsPr
                 <input
                   type='text'
                   value={slot.name}
-                  onChange={(e) =>
-                    onChange(
-                      i,
-                      e.target.value,
-                      slot.mmr,
-                      slot.rolePreference ?? '',
-                      undefined,
-                      slot.bannedRoles,
-                    )
-                  }
+                  onChange={(e) => onChange(i, { name: e.target.value })}
                   tabIndex={i + 1}
                   placeholder={t('placeholderNickname')}
                   className='lol-input w-full min-w-[5rem] max-w-[140px] rounded-lg'
@@ -90,18 +94,21 @@ export default function ParticipantSlots({ slots, onChange }: ParticipantSlotsPr
                   onChange={(e) => {
                     const v = e.target.value.replace(/\D/g, '');
                     const mmr = v === '' ? 0 : parseInt(v, 10);
-                    onChange(
-                      i,
-                      slot.name,
-                      Number.isNaN(mmr) ? 0 : mmr,
-                      slot.rolePreference ?? '',
-                      undefined,
-                      slot.bannedRoles,
-                    );
+                    onChange(i, { mmr: Number.isNaN(mmr) ? 0 : mmr });
                   }}
                   tabIndex={i + 11}
                   placeholder={t('placeholderMmr')}
                   className='lol-input min-w-[8rem] w-[8rem] rounded-lg'
+                />
+              </td>
+              <td className='whitespace-nowrap py-1.5 px-1.5'>
+                <FixedTeamPicker
+                  name={`fixed-team-${slot.id}`}
+                  value={slot.fixedTeam ?? ''}
+                  onChange={(fixedTeam) => onChange(i, { fixedTeam })}
+                  isOptionDisabled={(team) =>
+                    team !== '' && countFixedTeamExcept(slots, team, i) >= TEAM_SIZE
+                  }
                 />
               </td>
               <td className='whitespace-nowrap py-1.5 pl-1.5 pr-2'>
@@ -118,19 +125,13 @@ export default function ParticipantSlots({ slots, onChange }: ParticipantSlotsPr
                       if (bumpedIndex !== -1) {
                         onChange(
                           i,
-                          slot.name,
-                          slot.mmr,
-                          newRole,
-                          {
-                            index: bumpedIndex,
-                            rolePreference: '',
-                          },
-                          slot.bannedRoles,
+                          { rolePreference: newRole },
+                          { index: bumpedIndex, rolePreference: '' },
                         );
                         return;
                       }
                     }
-                    onChange(i, slot.name, slot.mmr, newRole, undefined, slot.bannedRoles);
+                    onChange(i, { rolePreference: newRole });
                   }}
                   isOptionDisabled={(role) => countRoleExcept(slots, role, i) >= MAX_PER_ROLE}
                   placeholder={t('roleUnset')}
@@ -153,14 +154,7 @@ export default function ParticipantSlots({ slots, onChange }: ParticipantSlotsPr
                               const next = e.target.checked
                                 ? [...(slot.bannedRoles ?? []), role]
                                 : (slot.bannedRoles ?? []).filter((r) => r !== role);
-                              onChange(
-                                i,
-                                slot.name,
-                                slot.mmr,
-                                slot.rolePreference ?? '',
-                                undefined,
-                                next,
-                              );
+                              onChange(i, { bannedRoles: next });
                             }}
                             className='peer sr-only'
                           />
