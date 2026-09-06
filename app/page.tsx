@@ -2,8 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { flushSync } from 'react-dom';
-import type { LinkedPairs, Player, RolePreference, SeriesBans, TeamAssignment } from '@/types';
-import type { Role } from '@/types';
+import type { FearlessMode, LinkedPairs, Player, SeriesDraft, TeamAssignment } from '@/types';
 import {
   getPlayers,
   setPlayers,
@@ -11,8 +10,10 @@ import {
   setLastAssignment,
   getDefaultPlayers,
   clearAllStorage,
-  getSeriesBans,
-  setSeriesBans,
+  getSeriesDraft,
+  setSeriesDraft,
+  getFearlessMode,
+  setFearlessMode,
   getLinkedPairs,
   setLinkedPairs,
 } from '@/lib/storage';
@@ -21,8 +22,11 @@ import { assignRoles, assignRolesWithPreferences } from '@/lib/roleAssignment';
 import { fillEmptyNames } from '@/lib/randomNames';
 import LanguageSelector from '@/components/LanguageSelector';
 import LinkedPairsEditor from '@/components/LinkedPairsEditor';
-import ParticipantSlots from '@/components/ParticipantSlots';
-import SeriesBanList from '@/components/SeriesBanList';
+import ParticipantSlots, {
+  type SlotChangeBump,
+  type SlotPatch,
+} from '@/components/ParticipantSlots';
+import SeriesDraftBoard from '@/components/SeriesDraftBoard';
 import TeamDivisionResult from '@/components/TeamDivisionResult';
 import { useTranslation } from '@/components/LanguageProvider';
 import { cn } from '@/lib/utils';
@@ -55,7 +59,8 @@ export default function Home() {
   const { t } = useTranslation();
   const [players, setPlayersState] = useState<Player[]>([]);
   const [assignment, setAssignment] = useState<TeamAssignment | null>(null);
-  const [seriesBans, setSeriesBansState] = useState<SeriesBans>([]);
+  const [seriesDraft, setSeriesDraftState] = useState<SeriesDraft>([]);
+  const [fearlessMode, setFearlessModeState] = useState<FearlessMode>('off');
   const [linkedPairs, setLinkedPairsState] = useState<LinkedPairs>([]);
   const [mounted, setMounted] = useState(false);
   const [activeTab, setActiveTab] = useState<TabId>('participants');
@@ -66,16 +71,17 @@ export default function Home() {
   useEffect(() => {
     const loadedPlayers = getPlayers();
     const loadedAssignment = getLastAssignment();
-    const loadedBans = getSeriesBans();
+    const loadedDraft = getSeriesDraft();
     console.log('[관악구 피바라기] 마운트: localStorage에서 로드', {
       playersCount: loadedPlayers.length,
       hasAssignment: !!loadedAssignment,
       assignmentCreatedAt: loadedAssignment?.createdAt,
-      gamesCount: loadedBans.length,
+      gamesCount: loadedDraft.length,
     });
     setPlayersState(loadedPlayers);
     setAssignment(loadedAssignment);
-    setSeriesBansState(loadedBans);
+    setSeriesDraftState(loadedDraft);
+    setFearlessModeState(getFearlessMode());
     setLinkedPairsState(getLinkedPairs());
     setMounted(true);
   }, []);
@@ -98,50 +104,33 @@ export default function Home() {
     if (next) setLastAssignment(next);
   }, []);
 
-  /** bump: 역할이 꽉 찼을 때, 해당 역할을 가진 다른 한 명의 역할을 ''로 바꿈. bannedRoles: 해당 참가자 포지션 금지 목록 */
+  /** 빈 문자열/빈 배열은 저장하지 않도록 undefined로 정규화 */
+  const normalizePatch = (patch: SlotPatch): Partial<Player> => {
+    const next: Partial<Player> = { ...patch };
+    if ('rolePreference' in patch) next.rolePreference = patch.rolePreference || undefined;
+    if ('bannedRoles' in patch) next.bannedRoles = patch.bannedRoles?.length ? patch.bannedRoles : undefined;
+    if ('fixedTeam' in patch) next.fixedTeam = patch.fixedTeam || undefined;
+    return next;
+  };
+
+  /** bump: 역할이 꽉 찼을 때, 해당 역할을 가진 다른 한 명의 역할을 ''로 바꿈 */
   const handleSlotChange = useCallback(
-    (
-      index: number,
-      name: string,
-      mmr: number,
-      rolePreference: RolePreference,
-      bump?: { index: number; rolePreference: '' },
-      bannedRoles?: Role[],
-    ) => {
+    (index: number, patch: SlotPatch, bump?: SlotChangeBump) => {
+      const normalized = normalizePatch(patch);
       const next = [...players];
-      const pref: RolePreference | undefined = rolePreference || undefined;
-      next[index] = {
-        ...next[index],
-        name,
-        mmr,
-        rolePreference: pref,
-        ...(bannedRoles !== undefined && {
-          bannedRoles: bannedRoles.length ? bannedRoles : undefined,
-        }),
-      };
-      if (bump) {
-        next[bump.index] = {
-          ...next[bump.index],
-          rolePreference: bump.rolePreference ?? undefined,
-        };
+      next[index] = { ...next[index], ...normalized };
+      const bumpPatch: Partial<Player> | null = bump ? { rolePreference: undefined } : null;
+      if (bump && bumpPatch) {
+        next[bump.index] = { ...next[bump.index], ...bumpPatch };
       }
       persistPlayers(next);
       if (assignment) {
         const id = next[index].id;
-        const patch: Partial<Player> = {
-          name,
-          mmr,
-          rolePreference: pref,
-          ...(bannedRoles !== undefined && {
-            bannedRoles: bannedRoles?.length ? bannedRoles : undefined,
-          }),
-        };
         const bumpId = bump ? next[bump.index].id : null;
-        const bumpPatch = bump ? { rolePreference: '' as RolePreference } : null;
         const updateInTeam = (team: Player[], pid: string, p: Partial<Player>) =>
           team.map((pl) => (pl.id === pid ? { ...pl, ...p } : pl));
-        let teamA = updateInTeam(assignment.teamA, id, patch);
-        let teamB = updateInTeam(assignment.teamB, id, patch);
+        let teamA = updateInTeam(assignment.teamA, id, normalized);
+        let teamB = updateInTeam(assignment.teamB, id, normalized);
         if (bumpId && bumpPatch) {
           teamA = updateInTeam(teamA, bumpId, bumpPatch);
           teamB = updateInTeam(teamB, bumpId, bumpPatch);
@@ -151,7 +140,7 @@ export default function Home() {
             Object.entries(roles).map(([r, p]) => [
               r,
               p.id === id
-                ? { ...p, ...patch }
+                ? { ...p, ...normalized }
                 : bumpId && p.id === bumpId
                   ? { ...p, ...bumpPatch }
                   : p,
@@ -169,6 +158,12 @@ export default function Home() {
     },
     [players, assignment, persistPlayers, persistAssignment],
   );
+
+  /** 모든 참가자의 1팀·2팀 고정을 해제 */
+  const handleClearFixedTeams = useCallback(() => {
+    console.log('[관악구 피바라기] 버튼 클릭: 팀 고정 해제');
+    persistPlayers(players.map((p) => ({ ...p, fixedTeam: undefined })));
+  }, [players, persistPlayers]);
 
   const handleDivideTeams = useCallback(() => {
     console.log('[관악구 피바라기] 버튼 클릭: 팀 나누기');
@@ -239,15 +234,22 @@ export default function Home() {
     setPlayersState(empty);
     setPlayers(empty);
     setAssignment(null);
-    setSeriesBansState([]);
+    setSeriesDraftState([]);
+    setFearlessModeState('off');
     setLinkedPairsState([]);
     setActiveTab('participants');
   }, []);
 
-  /** 시리즈 밴 목록 변경 (로컬 저장) */
-  const handleSeriesBansUpdate = useCallback((next: SeriesBans) => {
-    setSeriesBansState(next);
-    setSeriesBans(next);
+  /** 시리즈 밴픽 변경 (로컬 저장) */
+  const handleSeriesDraftUpdate = useCallback((next: SeriesDraft) => {
+    setSeriesDraftState(next);
+    setSeriesDraft(next);
+  }, []);
+
+  const handleFearlessModeChange = useCallback((mode: FearlessMode) => {
+    console.log('[관악구 피바라기] 피어리스 모드 변경:', mode);
+    setFearlessModeState(mode);
+    setFearlessMode(mode);
   }, []);
 
   /** 참가자 명단(10명)을 랜덤 셔플해 1팀·2팀 재구성. 누를 때마다 다른 조합 */
@@ -282,6 +284,7 @@ export default function Home() {
 
   const valid = validPlayers(players);
   const validMmrCount = countValidMmr(players);
+  const fixedTeamCount = players.filter((p) => (p.fixedTeam ?? '') !== '').length;
   const canDivide = validMmrCount === 10;
   const hasAssignment = assignment !== null;
 
@@ -296,10 +299,10 @@ export default function Home() {
       <div className='lol-panel w-full max-w-6xl'>
         <header className='lol-panel-header relative px-4 py-6 text-center sm:px-6 sm:py-8'>
           <LanguageSelector />
-          <h1 className='font-cinzel text-2xl font-bold uppercase tracking-[0.25em] text-lol-gold drop-shadow-sm sm:text-3xl'>
+          <h1 className='lol-title-gold font-cinzel text-2xl font-bold uppercase tracking-[0.28em] sm:text-4xl'>
             {t('appTitle')}
           </h1>
-          <div className='mx-auto mt-3 h-px w-16 bg-gradient-to-r from-transparent via-lol-gold/60 to-transparent' />
+          <div className='lol-ornament mx-auto mt-4 w-40' />
           <p className='lol-desc mt-3 tracking-wide text-lol-muted'>
             {t('appSubtitle')}
           </p>
@@ -317,9 +320,9 @@ export default function Home() {
                 setActiveTab(id);
               }}
               className={cn(
-                'min-w-[5rem] flex-1 py-3.5 text-sm font-semibold uppercase tracking-wider transition-all duration-200 sm:py-4 sm:text-base',
+                'lol-tab min-w-[5rem] flex-1 py-3.5 font-cinzel text-sm font-bold uppercase tracking-[0.18em] sm:py-4 sm:text-base',
                 activeTab === id
-                  ? 'border-b-2 border-lol-gold bg-lol-card/70 text-lol-gold -mb-px shadow-[0_-2px_8px_rgba(0,0,0,0.2)]'
+                  ? 'text-lol-gold-bright'
                   : 'text-lol-muted hover:bg-lol-card/30 hover:text-lol-gold-bright',
               )}
             >
@@ -329,19 +332,31 @@ export default function Home() {
                   ({validMmrCount}/10)
                 </span>
               )}
-              {id === 'bans' && seriesBans.length > 0 && (
+              {id === 'bans' && seriesDraft.length > 0 && (
                 <span className='lol-desc ml-1.5 font-normal text-lol-muted'>
-                  ({seriesBans.length} {t('gamesCount')})
+                  ({seriesDraft.length} {t('gamesCount')})
                 </span>
               )}
             </button>
           ))}
         </div>
 
-        <div className='min-h-[320px] overflow-auto px-4 py-3 sm:px-6 sm:py-4'>
+        <div key={activeTab} className='lol-animate-in min-h-[320px] overflow-auto px-4 py-3 sm:px-6 sm:py-4'>
           {activeTab === 'participants' && (
             <div className='flex flex-col gap-3'>
               <ParticipantSlots slots={players} onChange={handleSlotChange} />
+              <div className='flex flex-wrap items-center justify-between gap-3 rounded-xl border border-lol-border/70 bg-lol-bg-card/60 px-4 py-3'>
+                <p className='lol-desc max-w-3xl text-lol-muted'>{t('fixedTeamHint')}</p>
+                <button
+                  type='button'
+                  onClick={handleClearFixedTeams}
+                  disabled={fixedTeamCount === 0}
+                  className='lol-btn-secondary shrink-0 rounded-lg px-4 py-2'
+                  title={t('clearFixedTeamsTitle')}
+                >
+                  {t('clearFixedTeams')}
+                </button>
+              </div>
               <LinkedPairsEditor
                 slots={players}
                 linkedPairs={linkedPairs}
@@ -394,7 +409,7 @@ export default function Home() {
                     assignment={assignment}
                     showRoles={!!assignment}
                   />
-                  <div className='lol-divider my-2' />
+                  <div className='lol-ornament my-3' />
                   <div className='flex flex-wrap justify-center gap-3'>
                     <button
                       type='button'
@@ -458,7 +473,12 @@ export default function Home() {
 
           {activeTab === 'bans' && (
             <div className='flex flex-col gap-4'>
-              <SeriesBanList games={seriesBans} onUpdate={handleSeriesBansUpdate} />
+              <SeriesDraftBoard
+                games={seriesDraft}
+                fearlessMode={fearlessMode}
+                onUpdate={handleSeriesDraftUpdate}
+                onFearlessModeChange={handleFearlessModeChange}
+              />
             </div>
           )}
         </div>
