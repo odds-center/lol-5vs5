@@ -1,7 +1,10 @@
 # Discord 봇 연동 계획 — 음성 채널 참가자 자동 불러오기
 
-> 상태: **계획만 수립** (구현 전)
+> 상태: **1단계 구현 완료** (실제 디스코드 서버 테스트 전)
 > 목표: 디스코드 음성 채널에 모인 사람들의 이름을 사이트 참가자 명단에 자동으로 채워 넣는다.
+>
+> 봇은 이 레포가 아니라 **별도 레포 `lol-5vs5-bot`** 에 있고 Railway에 배포한다.
+> 사이트 쪽 변경(§3.4)은 이 레포에 있다.
 
 ---
 
@@ -41,20 +44,26 @@ HTTP Interactions(서버리스 엔드포인트)만으로는 "특정 음성 채�
    - 인원이 10명 초과: 셀렉트 메뉴로 참가할 10명 선택 → 링크 버튼
 4. 링크를 열면 사이트가 "디스코드에서 N명을 불러왔습니다. 현재 명단을 바꿀까요?" 확인 후 참가자 칸을 채운다.
 
-### 3.2 봇 (`bot/` 디렉터리, 사이트와 별도 배포)
+### 3.2 봇 (별도 레포 `lol-5vs5-bot`)
 
-- 런타임: Node.js 20+, TypeScript, `discord.js` v14
+봇을 하위 디렉터리가 아니라 별도 레포로 둔 이유: Railway는 레포 루트를 그대로 빌드하므로 분리가 단순하고,
+사이트 커밋마다 봇이 재배포되는 일도 없다.
+
+- 런타임: Node.js 18+, TypeScript, `discord.js` v14 (설치·타입체크 검증: 14.27.0)
 - Gateway Intents: `Guilds`, `GuildVoiceStates` (둘 다 **비특권** 인텐트 → 별도 승인 불필요)
 - 권한(초대 링크): scope `bot`, `applications.commands` / 권한 `View Channels`만. 음성 채널 **접속(Connect)은 필요 없음** (상태만 읽음)
-- 명령: `/내전` (옵션 없음). 추후 `채널:` 옵션으로 다른 음성 채널 지정 가능
+- 명령: `/내전` — 선택 옵션 `채널:`로 내가 있는 채널이 아닌 다른 음성 채널도 지정 가능
 - 처리 로직:
   1. `interaction.guild.voiceStates.cache.get(interaction.user.id)?.channel` 로 호출자의 음성 채널 확인
   2. `channel.members` 에서 봇 계정 제외
   3. 표시 이름 = 서버 닉네임 → 전역 표시 이름 → 사용자명 순 (`member.displayName`)
   4. 캐시에 멤버 정보가 없으면 `guild.members.fetch({ user: ids })` 로 보충 (ID 지정 조회는 특권 인텐트 불필요)
   5. 이름 배열을 링크로 인코딩 후 `ephemeral` 응답
-- 환경 변수: `DISCORD_TOKEN`, `DISCORD_APP_ID`, `SITE_URL`
-- 명령 등록 스크립트: `bot/scripts/register-commands.ts` (개발 중에는 길드 명령으로 즉시 반영)
+- 환경 변수: `DISCORD_TOKEN`, `DISCORD_APP_ID`, `SITE_URL`, `DEV_GUILD_ID`(선택)
+- 명령 등록 스크립트: `scripts/register-commands.ts` — `DEV_GUILD_ID`가 있으면 길드 명령으로 즉시 반영,
+  없으면 전역 등록(반영까지 최대 1시간)
+- 제약: 디스코드 선택 메뉴는 항목이 최대 25개다. 음성 채널에 25명을 넘으면 앞의 25명만 보여주고
+  메시지로 알린다
 
 ### 3.3 링크 형식
 
@@ -77,32 +86,43 @@ https://lol-5vs5.vercel.app/?import=<base64url(JSON)>
 | `lib/importLink.ts` (신규) | `?import=` 파싱·검증 (base64url 디코드, 배열 길이 ≤ 10, 이름 trim·길이 제한) |
 | `lib/storage.ts` | `lol-5vs5-mmr-by-name` 키 추가: 닉네임 → 마지막 MMR 기록/조회 |
 | `app/page.tsx` | 마운트 시 `import` 파라미터가 있으면 확인 모달 → 참가자 슬롯 채우기 → `history.replaceState`로 파라미터 제거 |
-| `components/ParticipantSlots.tsx` | MMR 입력 시 닉네임별 MMR 기록 갱신 |
-| `lib/i18n.ts` | 불러오기 확인/완료 문구 (ko/en) |
+| `components/ImportConfirmModal.tsx` (신규) | 덮어쓰기 확인 모달. ESC·배경 클릭으로 취소 |
+| `lib/discord.ts` (신규) | 봇 초대 URL 생성. `NEXT_PUBLIC_DISCORD_APP_ID`가 없으면 `null` |
+| `components/DiscordInviteButton.tsx` (신규) | 참가자 탭의 "디스코드에 봇 추가" 버튼. 앱 ID가 없으면 렌더링하지 않음 |
+| `lib/i18n.ts` | 불러오기 확인 문구, 초대 버튼 문구 (ko/en) |
 
 동작 규칙:
 - 불러온 인원이 10명 미만이면 앞 칸부터 채우고 나머지는 비워 둔다 (기존처럼 빈 이름은 팀 나누기 때 챔피언 이름으로 자동 채움)
 - 닉네임별 MMR 기록이 있으면 그 값을, 없으면 기본값 1000을 넣는다
 - 기존 명단·같은 팀 지정·팀 결과는 확인 후에만 덮어쓴다 (같은 팀 지정은 슬롯 기준이라 초기화)
+- **닉네임별 MMR은 입력할 때마다가 아니라 「팀 나누기」·「다시 나누기」 시점에 기록한다.**
+  키 입력마다 저장하면 "김", "김철", "김철수" 같은 중간 입력이 전부 남는다
+- **`lol-5vs5-mmr-by-name`은 「완전 초기화」로 지우지 않는다.** 지우면 MMR 복원 기능이 매번 리셋된다
 
 ### 3.5 배포
 
-- 사이트: 기존 Vercel 그대로
-- 봇: 상시 실행되는 Node 프로세스가 가능한 곳 (예: Railway, Fly.io, Render, 개인 서버/라즈베리파이 + `pm2`)
-- 디스코드 개발자 포털: 애플리케이션 생성 → Bot 토큰 발급 → OAuth2 URL 생성 → 내전 서버에 초대
+- 사이트: 기존 Vercel 그대로. 환경 변수 `NEXT_PUBLIC_DISCORD_APP_ID`를 넣으면 초대 버튼이 나타난다
+- 봇: **Railway** (별도 레포 연결, 실행 명령 `npm start`).
+  WebSocket 하나만 붙들고 대기하므로 메모리 100~200MB·CPU 거의 0 → Hobby 플랜 크레딧 안에서 끝난다.
+  Fly.io, Render, 개인 서버/라즈베리파이 + `pm2`도 동일하게 가능
+- 디스코드 개발자 포털: 애플리케이션 생성 → Bot 토큰 발급 → 서버 초대
+  (초대 링크는 사이트의 "디스코드에 봇 추가" 버튼이 만들어 준다)
 
 ---
 
 ## 4. 작업 순서 (체크리스트)
 
-- [ ] 디스코드 애플리케이션·봇 생성, 테스트 서버에 초대
-- [ ] `bot/` 스캐폴딩 (`discord.js`, `tsx`, 환경 변수 로딩)
-- [ ] `/내전` 명령 등록 스크립트
-- [ ] 음성 채널 멤버 조회 + 10명 초과 시 셀렉트 메뉴
-- [ ] 링크 인코딩 및 ephemeral 응답
-- [ ] 사이트: `?import=` 파서 + 확인 모달 + 슬롯 채우기
-- [ ] 사이트: 닉네임별 MMR 기억
-- [ ] 봇 배포 및 실제 내전 서버에서 테스트
+- [x] 봇 레포 스캐폴딩 (`discord.js`, `tsx`, 환경 변수 로딩) — 별도 레포 `lol-5vs5-bot`
+- [x] `/내전` 명령 등록 스크립트
+- [x] 음성 채널 멤버 조회 + 10명 초과 시 셀렉트 메뉴
+- [x] 링크 인코딩 및 ephemeral 응답
+- [x] 사이트: `?import=` 파서 + 확인 모달 + 슬롯 채우기
+- [x] 사이트: 닉네임별 MMR 기억·복원
+- [x] 사이트: 봇 초대 버튼 (앱 ID 없으면 숨김)
+- [ ] 디스코드 애플리케이션·봇 생성, 토큰 발급 — **사람이 해야 함**
+- [ ] 봇 레포를 GitHub에 올리고 Railway 연결
+- [ ] Vercel에 `NEXT_PUBLIC_DISCORD_APP_ID` 설정
+- [ ] 실제 내전 서버에서 테스트
 
 ---
 
@@ -116,5 +136,7 @@ https://lol-5vs5.vercel.app/?import=<base64url(JSON)>
 
 ## 6. 확인이 필요한 점
 
-- 봇을 상시 실행할 호스팅 환경 (무료/유료, 개인 서버 여부)
+- ~~봇을 상시 실행할 호스팅 환경~~ → **Railway로 결정**
 - 디스코드에 보이는 이름을 그대로 쓸지, 롤 닉네임(라이엇 ID)과 매핑할지 — 매핑하려면 `/닉네임등록` 같은 명령과 저장소가 추가로 필요
+- 링크 형식(`v: 1`)은 사이트 `lib/importLink.ts`와 봇 `src/importLink.ts` 두 곳에 있다.
+  레포가 분리돼 있으므로 한쪽만 바꾸면 조용히 깨진다 — 바꿀 때는 반드시 양쪽을 함께 고치고 `v`를 올릴 것

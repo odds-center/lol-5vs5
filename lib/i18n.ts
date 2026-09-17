@@ -79,6 +79,13 @@ const translations = {
     searchChampion: '챔피언 검색 (한/영)',
     searchNoResults: '검색 결과 없음',
     filterByRole: '역할군 필터',
+    importTitle: '디스코드에서 참가자 불러오기',
+    importConfirm:
+      '디스코드에서 {n}명을 불러왔습니다. 참가자 명단을 이 인원으로 채울까요? 지금 입력된 명단·같은 팀 지정·팀 결과는 지워집니다.',
+    importApply: '불러오기',
+    importCancel: '취소',
+    discordInvite: '디스코드에 봇 추가',
+    discordInviteHint: '서버에 봇을 넣고 `/내전`을 치면 음성 채널에 모인 사람이 그대로 참가자 명단에 채워집니다.',
   },
   en: {
     loading: 'Loading...',
@@ -144,6 +151,13 @@ const translations = {
     searchChampion: 'Search champion (KO/EN)',
     searchNoResults: 'No results',
     filterByRole: 'Filter by role',
+    importTitle: 'Import participants from Discord',
+    importConfirm:
+      'Found {n} participants from Discord. Fill the participant list with them? The current list, duo locks, and team results will be cleared.',
+    importApply: 'Import',
+    importCancel: 'Cancel',
+    discordInvite: 'Add bot to Discord',
+    discordInviteHint: 'Add the bot to your server, then run `/내전` to pull everyone in your voice channel into the list.',
   },
 } as const;
 

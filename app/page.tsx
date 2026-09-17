@@ -15,6 +15,9 @@ import {
   setSeriesBans,
   getLinkedPairs,
   setLinkedPairs,
+  clearLastAssignment,
+  lookupMmr,
+  rememberMmrForPlayers,
 } from '@/lib/storage';
 import { divideTeams, divideTeamsRandom } from '@/lib/teamAlgorithm';
 import { assignRoles, assignRolesWithPreferences } from '@/lib/roleAssignment';
@@ -25,6 +28,9 @@ import LinkedPairsEditor from '@/components/LinkedPairsEditor';
 import ParticipantSlots from '@/components/ParticipantSlots';
 import SeriesBanList from '@/components/SeriesBanList';
 import TeamDivisionResult from '@/components/TeamDivisionResult';
+import ImportConfirmModal from '@/components/ImportConfirmModal';
+import DiscordInviteButton from '@/components/DiscordInviteButton';
+import { IMPORT_PARAM, decodeImportParam } from '@/lib/importLink';
 import { useTranslation } from '@/components/LanguageProvider';
 import { cn } from '@/lib/utils';
 import { buttonPrimaryClass, buttonSecondaryClass } from '@/lib/styles';
@@ -61,6 +67,8 @@ export default function Home() {
   const [linkedPairs, setLinkedPairsState] = useState<LinkedPairs>([]);
   const [mounted, setMounted] = useState(false);
   const [activeTab, setActiveTab] = useState<TabId>('participants');
+  /** 디스코드 링크로 들어온 이름들. 확인 모달에서 수락하면 슬롯에 채운다 */
+  const [pendingImport, setPendingImport] = useState<string[] | null>(null);
 
   const playersRef = useRef(players);
   playersRef.current = players;
@@ -79,6 +87,23 @@ export default function Home() {
     setAssignment(loadedAssignment);
     setSeriesBansState(loadedBans);
     setLinkedPairsState(getLinkedPairs());
+
+    // 디스코드 봇이 만든 ?import= 링크 (docs/DISCORD_BOT_PLAN.md)
+    const rawImport = new URLSearchParams(window.location.search).get(IMPORT_PARAM);
+    if (rawImport) {
+      // 새로고침 때 같은 모달이 다시 뜨지 않도록 파라미터부터 지운다
+      const url = new URL(window.location.href);
+      url.searchParams.delete(IMPORT_PARAM);
+      window.history.replaceState(null, '', url.toString());
+      const names = decodeImportParam(rawImport);
+      if (names) {
+        console.log('[관악구 피바라기] 디스코드 불러오기 요청:', names.length, '명');
+        setPendingImport(names);
+      } else {
+        console.warn('[관악구 피바라기] ?import= 파싱 실패, 무시함');
+      }
+    }
+
     setMounted(true);
   }, []);
 
@@ -185,6 +210,8 @@ export default function Home() {
       alert('팀 나누기 실패. 10명 모두 MMR을 입력했는지 확인하세요.');
       return;
     }
+    // 명단이 확정된 시점에만 닉네임별 MMR을 기억 (다음 디스코드 불러오기에서 복원)
+    rememberMmrForPlayers(valid);
     try {
       const { teamA, teamB } = divideTeams(valid, linkedPairs);
       const next = createEmptyAssignment(teamA, teamB);
@@ -246,6 +273,28 @@ export default function Home() {
     setActiveTab('participants');
   }, []);
 
+  /** 디스코드에서 받은 이름으로 슬롯을 채운다. MMR은 닉네임별 기록에서 복원, 없으면 기본값 유지 */
+  const handleApplyImport = useCallback(
+    (names: string[]) => {
+      const next = getDefaultPlayers().map((slot, i) => {
+        const name = names[i];
+        if (!name) return slot;
+        const remembered = lookupMmr(name);
+        return { ...slot, name, mmr: remembered ?? slot.mmr };
+      });
+      persistPlayers(next);
+      // 같은 팀 지정은 슬롯 id 기준이라 명단이 바뀌면 의미가 없어진다
+      setLinkedPairsState([]);
+      setLinkedPairs([]);
+      setAssignment(null);
+      clearLastAssignment();
+      setPendingImport(null);
+      setActiveTab('participants');
+      console.log('[관악구 피바라기] 디스코드 불러오기 완료:', names.length, '명');
+    },
+    [persistPlayers],
+  );
+
   /** 시리즈 밴 목록 변경 (로컬 저장) */
   const handleSeriesBansUpdate = useCallback((next: SeriesBans) => {
     setSeriesBansState(next);
@@ -261,6 +310,7 @@ export default function Home() {
     persistPlayers(filled);
     const valid = filled.filter((p) => p.name.trim() !== '' && !Number.isNaN(p.mmr) && p.mmr >= 0);
     if (valid.length !== 10) return;
+    rememberMmrForPlayers(valid);
     try {
       const { teamA, teamB } = divideTeamsRandom(valid, linkedPairs);
       const next = createEmptyAssignment(teamA, teamB);
@@ -382,6 +432,7 @@ export default function Home() {
                     {t('fullReset')}
                   </button>
                 </div>
+                <DiscordInviteButton />
               </div>
             )}
 
@@ -465,6 +516,13 @@ export default function Home() {
         </div>
       </div>
       <GuideSection />
+      {pendingImport && (
+        <ImportConfirmModal
+          names={pendingImport}
+          onConfirm={() => handleApplyImport(pendingImport)}
+          onCancel={() => setPendingImport(null)}
+        />
+      )}
     </main>
   );
 }
