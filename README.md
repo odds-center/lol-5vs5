@@ -98,7 +98,7 @@ lol-5vs5/
 ├── app/
 │   ├── layout.tsx
 │   ├── page.tsx          # 메인 (탭: 참가자 / 결과)
-│   └── globals.css
+│   └── globals.css       # @tailwind 지시문만 (스타일은 Tailwind 클래스·tailwind.config.ts)
 ├── components/
 │   ├── ParticipantSlots.tsx   # 참가자 10슬롯 테이블 (닉네임|MMR|역할군)
 │   ├── RoleIcon.tsx            # 역할별 아이콘 (public/roles/*.svg 참조)
@@ -144,6 +144,19 @@ npm run build
 
 - 저장소 연결 후 Vercel에서 자동 빌드·배포.
 - 환경 변수 없이 사용 가능 (클라이언트 전용).
+
+### 검색 노출 (SEO)
+
+- 제목·설명·키워드·FAQ 문구는 `lib/seo.ts` 한 곳에서 관리하며, 메타 태그·JSON-LD·페이지 하단 가이드(`components/GuideSection.tsx`)가 같은 데이터를 사용합니다.
+- 검색엔진 소유 확인용 환경 변수 (선택, Vercel 프로젝트 설정에 추가 후 재배포):
+
+| 환경 변수 | 용도 |
+|-----------|------|
+| `NEXT_PUBLIC_SITE_URL` | 실제 도메인 (기본값 `https://lol-5vs5.vercel.app`) |
+| `GOOGLE_SITE_VERIFICATION` | Google Search Console HTML 태그의 `content` 값 |
+| `NAVER_SITE_VERIFICATION` | 네이버 서치어드바이저 HTML 태그의 `content` 값 |
+
+- 소유 확인 후 두 곳 모두에 `/sitemap.xml`을 제출하세요.
 
 ---
 

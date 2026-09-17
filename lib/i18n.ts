@@ -17,8 +17,8 @@ export function setStoredLocale(locale: Locale): void {
 const translations = {
   ko: {
     loading: '로딩 중...',
-    appTitle: 'LoL 5vs5 내전',
-    appSubtitle: '관악구 피바라기 · MMR 밸런스 팀 분배 · 역할 랜덤 배정',
+    appTitle: 'LoL 5vs5 내전 팀짜기',
+    appSubtitle: '관악구 피바라기 · MMR 밸런스 팀 나누기 · 라인 랜덤 배정 · 듀오 같은 팀 지정',
     tabParticipants: '참가자',
     tabResult: '결과',
     tabBans: '밴 목록',
@@ -82,8 +82,8 @@ const translations = {
   },
   en: {
     loading: 'Loading...',
-    appTitle: 'LoL 5v5 In-house',
-    appSubtitle: 'MMR-balanced team split · Random role assignment',
+    appTitle: 'LoL 5v5 In-house Team Maker',
+    appSubtitle: 'MMR-balanced team split · Random role assignment · Duo lock',
     tabParticipants: 'Participants',
     tabResult: 'Result',
     tabBans: 'Bans',

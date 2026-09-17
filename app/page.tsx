@@ -19,6 +19,7 @@ import {
 import { divideTeams, divideTeamsRandom } from '@/lib/teamAlgorithm';
 import { assignRoles, assignRolesWithPreferences } from '@/lib/roleAssignment';
 import { fillEmptyNames } from '@/lib/randomNames';
+import GuideSection from '@/components/GuideSection';
 import LanguageSelector from '@/components/LanguageSelector';
 import LinkedPairsEditor from '@/components/LinkedPairsEditor';
 import ParticipantSlots from '@/components/ParticipantSlots';
@@ -273,14 +274,6 @@ export default function Home() {
     }
   }, [linkedPairs, persistPlayers]);
 
-  if (!mounted) {
-    return (
-      <div className='relative z-10 flex min-h-screen items-center justify-center font-cinzel text-lol-gold'>
-        {t('loading')}
-      </div>
-    );
-  }
-
   const valid = validPlayers(players);
   const validMmrCount = countValidMmr(players);
   const canDivide = validMmrCount === 10;
@@ -293,177 +286,185 @@ export default function Home() {
   ];
 
   return (
-    <main className='relative z-10 flex min-h-screen items-center justify-center p-4 sm:p-6'>
-      <div className='w-full max-w-6xl rounded-xl border border-t-[3px] border-lol-border border-t-lol-gold bg-gradient-to-b from-lol-bg-card to-lol-card shadow-panel'>
-        <header className='relative border-b border-lol-border px-4 py-6 text-center tracking-wider sm:px-6 sm:py-8'>
-          <LanguageSelector />
-          <h1 className='font-cinzel text-2xl font-bold uppercase tracking-[0.25em] text-lol-gold drop-shadow-sm sm:text-3xl'>
-            {t('appTitle')}
-          </h1>
-          <div className='mx-auto mt-3 h-px w-16 bg-gradient-to-r from-transparent via-lol-gold/60 to-transparent' />
-          <p className='mt-3 text-sm tracking-wide text-lol-muted'>
-            {t('appSubtitle')}
-          </p>
-        </header>
+    <main className='relative z-10'>
+      <div className='flex min-h-screen items-center justify-center p-4 sm:p-6'>
+        <div className='w-full max-w-6xl rounded-xl border border-t-[3px] border-lol-border border-t-lol-gold bg-gradient-to-b from-lol-bg-card to-lol-card shadow-panel'>
+          <header className='relative border-b border-lol-border px-4 pb-6 pt-16 text-center tracking-wider sm:px-6 sm:py-8'>
+            <LanguageSelector />
+            <h1 className='break-keep font-cinzel text-2xl font-bold uppercase tracking-[0.15em] text-lol-gold drop-shadow-sm sm:text-3xl sm:tracking-[0.25em]'>
+              {t('appTitle')}
+            </h1>
+            <div className='mx-auto mt-3 h-px w-16 bg-gradient-to-r from-transparent via-lol-gold/60 to-transparent' />
+            <p className='mt-3 text-sm tracking-wide text-lol-muted'>
+              {t('appSubtitle')}
+            </p>
+          </header>
 
-        <div className='flex border-b border-lol-border bg-lol-bg-card/50' role='tablist'>
-          {tabs.map(({ id, label }) => (
-            <button
-              key={id}
-              type='button'
-              role='tab'
-              aria-selected={activeTab === id}
-              onClick={() => {
-                console.log('[관악구 피바라기] 탭 클릭:', id);
-                setActiveTab(id);
-              }}
-              className={cn(
-                'min-w-[5rem] flex-1 py-3.5 text-sm font-semibold uppercase tracking-wider transition-all duration-200 sm:py-4 sm:text-base',
-                activeTab === id
-                  ? 'border-b-2 border-lol-gold bg-lol-card/70 text-lol-gold -mb-px shadow-[0_-2px_8px_rgba(0,0,0,0.2)]'
-                  : 'text-lol-muted hover:bg-lol-card/30 hover:text-lol-gold-bright',
-              )}
-            >
-              {label}
-              {id === 'participants' && (
-                <span className='ml-1.5 text-sm font-normal text-lol-muted'>
-                  ({validMmrCount}/10)
-                </span>
-              )}
-              {id === 'bans' && seriesBans.length > 0 && (
-                <span className='ml-1.5 text-sm font-normal text-lol-muted'>
-                  ({seriesBans.length} {t('gamesCount')})
-                </span>
-              )}
-            </button>
-          ))}
-        </div>
+          <div className='flex border-b border-lol-border bg-lol-bg-card/50' role='tablist'>
+            {tabs.map(({ id, label }) => (
+              <button
+                key={id}
+                type='button'
+                role='tab'
+                aria-selected={activeTab === id}
+                onClick={() => {
+                  console.log('[관악구 피바라기] 탭 클릭:', id);
+                  setActiveTab(id);
+                }}
+                className={cn(
+                  'min-w-[5rem] flex-1 py-3.5 text-sm font-semibold uppercase tracking-wider transition-all duration-200 sm:py-4 sm:text-base',
+                  activeTab === id
+                    ? 'border-b-2 border-lol-gold bg-lol-card/70 text-lol-gold -mb-px shadow-[0_-2px_8px_rgba(0,0,0,0.2)]'
+                    : 'text-lol-muted hover:bg-lol-card/30 hover:text-lol-gold-bright',
+                )}
+              >
+                {label}
+                {mounted && id === 'participants' && (
+                  <span className='ml-1.5 text-sm font-normal text-lol-muted'>
+                    ({validMmrCount}/10)
+                  </span>
+                )}
+                {mounted && id === 'bans' && seriesBans.length > 0 && (
+                  <span className='ml-1.5 text-sm font-normal text-lol-muted'>
+                    ({seriesBans.length} {t('gamesCount')})
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
 
-        <div className='min-h-[320px] overflow-auto px-4 py-3 sm:px-6 sm:py-4'>
-          {activeTab === 'participants' && (
-            <div className='flex flex-col gap-3'>
-              <ParticipantSlots slots={players} onChange={handleSlotChange} />
-              <LinkedPairsEditor
-                slots={players}
-                linkedPairs={linkedPairs}
-                onAdd={(id1, id2) => {
-                  const next: LinkedPairs = [...linkedPairs, [id1, id2].sort() as [string, string]];
-                  setLinkedPairsState(next);
-                  setLinkedPairs(next);
-                }}
-                onRemove={(index) => {
-                  const next = linkedPairs.filter((_, i) => i !== index);
-                  setLinkedPairsState(next);
-                  setLinkedPairs(next);
-                }}
-              />
-              {validMmrCount > 0 && validMmrCount < 10 && (
-                <p className='rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-center text-sm text-amber-300/95'>
-                  {t('needMmrAll')}
-                </p>
-              )}
-              <div className='flex flex-wrap justify-center gap-4 pt-2'>
-                <button
-                  type='button'
-                  onClick={() => {
-                    console.log('[관악구 피바라기] 버튼 클릭: 팀 나누기 (참가자 탭)');
-                    handleDivideTeams();
+          <div className='min-h-[320px] overflow-auto px-4 py-3 sm:px-6 sm:py-4'>
+            {/* 헤더·탭·가이드는 서버에서 렌더링하고, localStorage가 필요한 탭 내용만 마운트 후 표시 */}
+            {!mounted && (
+              <p className='py-32 text-center font-cinzel text-lol-gold'>{t('loading')}</p>
+            )}
+
+            {mounted && activeTab === 'participants' && (
+              <div className='flex flex-col gap-3'>
+                <ParticipantSlots slots={players} onChange={handleSlotChange} />
+                <LinkedPairsEditor
+                  slots={players}
+                  linkedPairs={linkedPairs}
+                  onAdd={(id1, id2) => {
+                    const next: LinkedPairs = [...linkedPairs, [id1, id2].sort() as [string, string]];
+                    setLinkedPairsState(next);
+                    setLinkedPairs(next);
                   }}
-                  disabled={!canDivide}
-                  className={cn(buttonPrimaryClass, 'min-w-[160px] rounded-lg py-3.5 shadow-md')}
-                >
-                  {t('divideTeams')}
-                </button>
-                <button
-                  type='button'
-                  onClick={handleFullReset}
-                  className={cn(buttonSecondaryClass, 'min-w-[130px] rounded-lg py-3')}
-                  title={t('fullResetTitle')}
-                >
-                  {t('fullReset')}
-                </button>
-              </div>
-            </div>
-          )}
-
-          {activeTab === 'result' && (
-            <div className='flex flex-col gap-5'>
-              {hasAssignment ? (
-                <>
-                  <TeamDivisionResult
-                    key={assignment.createdAt}
-                    assignment={assignment}
-                    showRoles={!!assignment}
-                  />
-                  <div className='my-2 h-px bg-gradient-to-r from-transparent via-lol-border to-transparent' />
-                  <div className='flex flex-wrap justify-center gap-3'>
-                    <button
-                      type='button'
-                      title={t('redivideTitle')}
-                      onClick={() => {
-                        console.log('[관악구 피바라기] 버튼 클릭: 다시 나누기');
-                        handleRedivide();
-                      }}
-                      className={cn(buttonSecondaryClass, 'min-w-[120px] rounded-lg py-2.5')}
-                    >
-                      {t('redivide')}
-                    </button>
-                    <button
-                      type='button'
-                      title={t('assignRolesTitle')}
-                      onClick={() => {
-                        console.log('[관악구 피바라기] 버튼 클릭: 역할 랜덤 배정');
-                        handleAssignRoles();
-                      }}
-                      className={cn(buttonPrimaryClass, 'min-w-[140px] rounded-lg py-2.5 shadow-md')}
-                    >
-                      {t('assignRoles')}
-                    </button>
-                    <button
-                      type='button'
-                      onClick={() => {
-                        console.log('[관악구 피바라기] 버튼 클릭: 참가자 수정');
-                        setActiveTab('participants');
-                      }}
-                      className={cn(buttonSecondaryClass, 'min-w-[120px] rounded-lg py-2.5')}
-                    >
-                      {t('editParticipants')}
-                    </button>
-                    <button
-                      type='button'
-                      onClick={handleFullReset}
-                      className={cn(buttonSecondaryClass, 'min-w-[120px] rounded-lg py-2.5')}
-                      title={t('fullResetTitle')}
-                    >
-                      {t('fullReset')}
-                    </button>
-                  </div>
-                </>
-              ) : (
-                <div className='flex flex-col items-center justify-center rounded-xl border border-lol-border bg-lol-bg-card/50 py-12 text-center'>
-                  <p className='mb-5 text-lol-muted'>{t('noTeamYet')}</p>
+                  onRemove={(index) => {
+                    const next = linkedPairs.filter((_, i) => i !== index);
+                    setLinkedPairsState(next);
+                    setLinkedPairs(next);
+                  }}
+                />
+                {validMmrCount > 0 && validMmrCount < 10 && (
+                  <p className='rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-center text-sm text-amber-300/95'>
+                    {t('needMmrAll')}
+                  </p>
+                )}
+                <div className='flex flex-wrap justify-center gap-4 pt-2'>
                   <button
                     type='button'
                     onClick={() => {
-                      console.log('[관악구 피바라기] 버튼 클릭: 참가자 탭에서 팀 나누기');
-                      setActiveTab('participants');
+                      console.log('[관악구 피바라기] 버튼 클릭: 팀 나누기 (참가자 탭)');
+                      handleDivideTeams();
                     }}
-                    className={cn(buttonPrimaryClass, 'min-w-[200px] rounded-lg py-3.5 shadow-md')}
+                    disabled={!canDivide}
+                    className={cn(buttonPrimaryClass, 'min-w-[160px] rounded-lg py-3.5 shadow-md')}
                   >
-                    {t('goToParticipantsTab')}
+                    {t('divideTeams')}
+                  </button>
+                  <button
+                    type='button'
+                    onClick={handleFullReset}
+                    className={cn(buttonSecondaryClass, 'min-w-[130px] rounded-lg py-3')}
+                    title={t('fullResetTitle')}
+                  >
+                    {t('fullReset')}
                   </button>
                 </div>
-              )}
-            </div>
-          )}
+              </div>
+            )}
 
-          {activeTab === 'bans' && (
-            <div className='flex flex-col gap-4'>
-              <SeriesBanList games={seriesBans} onUpdate={handleSeriesBansUpdate} />
-            </div>
-          )}
+            {mounted && activeTab === 'result' && (
+              <div className='flex flex-col gap-5'>
+                {hasAssignment ? (
+                  <>
+                    <TeamDivisionResult
+                      key={assignment.createdAt}
+                      assignment={assignment}
+                      showRoles={!!assignment}
+                    />
+                    <div className='my-2 h-px bg-gradient-to-r from-transparent via-lol-border to-transparent' />
+                    <div className='flex flex-wrap justify-center gap-3'>
+                      <button
+                        type='button'
+                        title={t('redivideTitle')}
+                        onClick={() => {
+                          console.log('[관악구 피바라기] 버튼 클릭: 다시 나누기');
+                          handleRedivide();
+                        }}
+                        className={cn(buttonSecondaryClass, 'min-w-[120px] rounded-lg py-2.5')}
+                      >
+                        {t('redivide')}
+                      </button>
+                      <button
+                        type='button'
+                        title={t('assignRolesTitle')}
+                        onClick={() => {
+                          console.log('[관악구 피바라기] 버튼 클릭: 역할 랜덤 배정');
+                          handleAssignRoles();
+                        }}
+                        className={cn(buttonPrimaryClass, 'min-w-[140px] rounded-lg py-2.5 shadow-md')}
+                      >
+                        {t('assignRoles')}
+                      </button>
+                      <button
+                        type='button'
+                        onClick={() => {
+                          console.log('[관악구 피바라기] 버튼 클릭: 참가자 수정');
+                          setActiveTab('participants');
+                        }}
+                        className={cn(buttonSecondaryClass, 'min-w-[120px] rounded-lg py-2.5')}
+                      >
+                        {t('editParticipants')}
+                      </button>
+                      <button
+                        type='button'
+                        onClick={handleFullReset}
+                        className={cn(buttonSecondaryClass, 'min-w-[120px] rounded-lg py-2.5')}
+                        title={t('fullResetTitle')}
+                      >
+                        {t('fullReset')}
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <div className='flex flex-col items-center justify-center rounded-xl border border-lol-border bg-lol-bg-card/50 py-12 text-center'>
+                    <p className='mb-5 text-lol-muted'>{t('noTeamYet')}</p>
+                    <button
+                      type='button'
+                      onClick={() => {
+                        console.log('[관악구 피바라기] 버튼 클릭: 참가자 탭에서 팀 나누기');
+                        setActiveTab('participants');
+                      }}
+                      className={cn(buttonPrimaryClass, 'min-w-[200px] rounded-lg py-3.5 shadow-md')}
+                    >
+                      {t('goToParticipantsTab')}
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {mounted && activeTab === 'bans' && (
+              <div className='flex flex-col gap-4'>
+                <SeriesBanList games={seriesBans} onUpdate={handleSeriesBansUpdate} />
+              </div>
+            )}
+          </div>
         </div>
       </div>
+      <GuideSection />
     </main>
   );
 }
