@@ -61,10 +61,9 @@ export default function RoleDropdown({
 
   useEffect(() => {
     if (open) {
-      const prevOverflow = document.body.style.overflow;
-      document.body.style.overflow = 'hidden';
+      document.body.classList.add('overflow-hidden');
       return () => {
-        document.body.style.overflow = prevOverflow;
+        document.body.classList.remove('overflow-hidden');
       };
     }
   }, [open]);
@@ -90,7 +89,7 @@ export default function RoleDropdown({
   const dropdownList = open && position && typeof document !== 'undefined' && (
     <ul
       ref={listRef}
-      className='scrollbar-hide fixed z-[100] min-w-[7.5rem] rounded border border-lol-border bg-lol-card py-1 shadow-lg'
+      className='fixed z-[100] min-w-[7.5rem] rounded border border-lol-border bg-lol-card py-1 shadow-lg'
       role='listbox'
       style={{
         ...(position.top !== undefined ? { top: position.top } : { bottom: position.bottom }),

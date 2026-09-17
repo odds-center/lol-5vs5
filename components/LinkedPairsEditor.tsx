@@ -5,6 +5,8 @@ import type { LinkedPairs } from '@/types';
 import type { Player } from '@/types';
 import ParticipantDropdown from './ParticipantDropdown';
 import { useTranslation } from '@/components/LanguageProvider';
+import { buttonPrimaryClass } from '@/lib/styles';
+import { cn } from '@/lib/utils';
 
 interface LinkedPairsEditorProps {
   slots: Player[];
@@ -50,12 +52,12 @@ export default function LinkedPairsEditor({
   return (
     <div className="rounded-xl border border-lol-border bg-lol-bg-card/80 p-5 shadow-inner ring-1 ring-black/5">
       <div className="mb-4 flex items-center gap-2 border-l-4 border-lol-gold pl-3">
-        <h4 className="lol-section-title text-sm uppercase tracking-wider">
+        <h4 className="font-cinzel text-sm font-bold uppercase tracking-wider text-lol-gold">
           {t('sameTeamTitle')}
         </h4>
-        <span className="lol-desc text-lol-muted">{t('sameTeamSub')}</span>
+        <span className="text-sm text-lol-muted">{t('sameTeamSub')}</span>
       </div>
-      <p className="lol-desc mb-4 text-lol-muted">
+      <p className="mb-4 text-sm text-lol-muted">
         {t('sameTeamDesc')}
       </p>
       {linkedPairs.length > 0 && (
@@ -65,7 +67,7 @@ export default function LinkedPairsEditor({
               key={`${id1}-${id2}-${idx}`}
               className="flex items-center gap-2 rounded-lg border border-lol-border/70 bg-lol-card/70 py-2 pl-3 pr-1 shadow-sm"
             >
-              <span className="lol-desc text-lol-gold-bright">
+              <span className="text-sm text-lol-gold-bright">
                 {slotLabel(id1)} <span className="text-lol-gold/80">↔</span> {slotLabel(id2)}
               </span>
               <button
@@ -83,7 +85,7 @@ export default function LinkedPairsEditor({
       )}
       <div className="flex flex-wrap items-end gap-3 rounded-lg border border-lol-border/60 bg-lol-card/40 p-4">
         <label className="flex flex-col gap-1.5">
-          <span className="lol-desc text-lol-muted">{t('participant')} 1</span>
+          <span className="text-sm text-lol-muted">{t('participant')} 1</span>
           <ParticipantDropdown
             slots={slots}
             value={selectA}
@@ -92,9 +94,9 @@ export default function LinkedPairsEditor({
             placeholder={t('select')}
           />
         </label>
-        <span className="lol-desc pb-2.5 text-lg text-lol-gold/70">↔</span>
+        <span className="pb-2.5 text-lg text-lol-gold/70">↔</span>
         <label className="flex flex-col gap-1.5">
-          <span className="lol-desc text-lol-muted">{t('participant')} 2</span>
+          <span className="text-sm text-lol-muted">{t('participant')} 2</span>
           <ParticipantDropdown
             slots={slots}
             value={selectB}
@@ -107,7 +109,7 @@ export default function LinkedPairsEditor({
           type="button"
           onClick={handleAdd}
           disabled={addDisabled}
-          className="lol-btn-primary rounded-lg py-2.5 px-4"
+          className={cn(buttonPrimaryClass, 'rounded-lg px-4 py-2.5')}
         >
           {t('add')}
         </button>

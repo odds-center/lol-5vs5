@@ -9,6 +9,7 @@ import Image from 'next/image';
 import { useTranslation } from '@/components/LanguageProvider';
 import { cn } from '@/lib/utils';
 import { preloadChampionImages } from '@/lib/preload';
+import { buttonPrimaryClass, buttonSecondaryClass, inputClass } from '@/lib/styles';
 import RoleIcon from './RoleIcon';
 
 const SLOT_COUNT = 5;
@@ -142,8 +143,8 @@ export default function SeriesBanList({ games, onUpdate }: SeriesBanListProps) {
 
       {games.length === 0 ? (
         <div className='rounded-lg border border-lol-border bg-lol-bg-card/60 py-5 text-center'>
-          <p className='lol-desc mb-2 text-lol-muted'>{t('noBansYet')}</p>
-          <button type='button' onClick={addGame} className='lol-btn-primary rounded-lg py-2 px-4'>
+          <p className='mb-2 text-sm text-lol-muted'>{t('noBansYet')}</p>
+          <button type='button' onClick={addGame} className={cn(buttonPrimaryClass, 'rounded-lg px-4 py-2')}>
             {t('addGameBans')}
           </button>
         </div>
@@ -158,7 +159,7 @@ export default function SeriesBanList({ games, onUpdate }: SeriesBanListProps) {
                 <button
                   type='button'
                   onClick={() => resetGameBans(gameIndex)}
-                  className='lol-desc text-lol-muted hover:text-amber-400'
+                  className='text-sm text-lol-muted hover:text-amber-400'
                   title={t('resetGameBansTitle')}
                 >
                   {t('resetGameBans')}
@@ -215,7 +216,7 @@ export default function SeriesBanList({ games, onUpdate }: SeriesBanListProps) {
                   return (
                     <div className='border-t border-lol-border/70 px-2.5 py-1.5'>
                       <div className='mb-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between'>
-                        <span className='lol-desc text-lol-muted'>
+                        <span className='text-sm text-lol-muted'>
                           {t('selectChampion')} · {t('game')} {gameIndex + 1} ·{' '}
                           {pickingFor.team === 'blue' ? t('teamBlue') : t('teamRed')}{' '}
                           {t('slotLabel')} {pickingFor.slotIndex + 1}
@@ -226,13 +227,16 @@ export default function SeriesBanList({ games, onUpdate }: SeriesBanListProps) {
                             value={banSearchQuery}
                             onChange={(e) => setBanSearchQuery(e.target.value)}
                             placeholder={t('searchChampion')}
-                            className='lol-input w-full min-w-0 max-w-[200px] rounded-lg border border-lol-border bg-lol-bg-card px-3 py-1.5 text-sm transition-all duration-200 placeholder:text-lol-muted focus:border-lol-gold/60 focus:outline-none focus:ring-1 focus:ring-lol-gold/40 sm:max-w-[220px]'
+                            className={cn(
+                              inputClass,
+                              'w-full min-w-0 max-w-[200px] rounded-lg py-1.5 text-sm transition-all duration-200 placeholder:text-lol-muted focus:ring-lol-gold/40 sm:max-w-[220px]',
+                            )}
                             aria-label={t('searchChampion')}
                           />
                           <button
                             type='button'
                             onClick={() => setPickingFor(null)}
-                            className='lol-desc shrink-0 text-lol-muted transition-colors hover:text-lol-gold'
+                            className='shrink-0 text-sm text-lol-muted transition-colors hover:text-lol-gold'
                           >
                             {t('cancelSelect')}
                           </button>
@@ -253,7 +257,7 @@ export default function SeriesBanList({ games, onUpdate }: SeriesBanListProps) {
                               disabled={disabled}
                               onClick={() => handleSelect(name, gameIndex)}
                               className={cn(
-                                'series-ban-cell relative flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-lol-border bg-lol-card transition-all duration-200 ease-out focus:outline-none focus:ring-2 focus:ring-lol-gold/50 sm:h-12 sm:w-12',
+                                'relative flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-lol-border bg-lol-card transition-all duration-200 ease-out focus:outline-none focus:ring-2 focus:ring-lol-gold/50 sm:h-12 sm:w-12',
                                 disabled
                                   ? 'cursor-not-allowed scale-100 opacity-40 hover:scale-100'
                                   : 'hover:scale-[1.03] hover:border-lol-gold/60 hover:bg-lol-card/90',
@@ -267,10 +271,10 @@ export default function SeriesBanList({ games, onUpdate }: SeriesBanListProps) {
                                 height={48}
                                 className="relative z-10 h-full w-full object-cover object-top transition-opacity duration-200"
                                 onError={(e) => {
-                                  e.currentTarget.style.display = 'none';
+                                  e.currentTarget.classList.add('hidden');
                                 }}
                               />
-                              <span className='series-ban-fallback absolute inset-0 z-0 flex items-center justify-center bg-lol-bg-card/90 text-xs font-medium text-lol-gold-bright'>
+                              <span className='absolute inset-0 z-0 flex items-center justify-center bg-lol-bg-card/90 text-xs font-medium text-lol-gold-bright'>
                                 {name.length > 2 ? name.slice(0, 2) : name}
                               </span>
                             </button>
@@ -278,7 +282,7 @@ export default function SeriesBanList({ games, onUpdate }: SeriesBanListProps) {
                         })}
                       </div>
                       {filteredChampions.length === 0 && (
-                        <p className='lol-desc mt-2 text-center text-sm text-lol-muted'>
+                        <p className='mt-2 text-center text-sm text-lol-muted'>
                           {banSearchQuery.trim()
                             ? `"${banSearchQuery}" — ${t('searchNoResults')}`
                             : banRoleFilter
@@ -294,7 +298,7 @@ export default function SeriesBanList({ games, onUpdate }: SeriesBanListProps) {
           <button
             type='button'
             onClick={addGame}
-            className='lol-btn-secondary w-full rounded-lg py-1.5 sm:w-auto sm:min-w-[140px]'
+            className={cn(buttonSecondaryClass, 'w-full rounded-lg py-1.5 sm:w-auto sm:min-w-[140px]')}
           >
             {t('addNextGameBans')}
           </button>
@@ -342,7 +346,7 @@ function TeamBanRow({
         isSelected && 'ring-1 ring-lol-gold/50',
       )}
     >
-      <p className='lol-desc mb-1 font-semibold text-lol-muted'>
+      <p className='mb-1 text-sm font-semibold text-lol-muted'>
         {teamLabel}
         {isSelected && <span className='ml-1 text-lol-gold'>{selectedLabel}</span>}
       </p>
@@ -380,7 +384,7 @@ function BanSlot({
   return (
     <div className='relative'>
       <div
-        className='series-ban-cell relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-lol-border bg-lol-card transition-all sm:h-14 sm:w-14'
+        className='relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-lol-border bg-lol-card transition-all sm:h-14 sm:w-14'
         title={filled ? championName : emptySlotLabel}
       >
         {filled ? (
@@ -392,10 +396,10 @@ function BanSlot({
               height={56}
               className="relative z-10 h-full w-full object-cover object-top"
               onError={(e) => {
-                e.currentTarget.style.display = 'none';
+                e.currentTarget.classList.add('hidden');
               }}
             />
-            <span className='series-ban-fallback absolute inset-0 z-0 flex items-center justify-center bg-lol-bg-card/90 text-xs font-medium text-lol-gold-bright'>
+            <span className='absolute inset-0 z-0 flex items-center justify-center bg-lol-bg-card/90 text-xs font-medium text-lol-gold-bright'>
               {championName.length > 2 ? championName.slice(0, 2) : championName}
             </span>
           </>

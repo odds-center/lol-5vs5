@@ -60,10 +60,9 @@ export default function ParticipantDropdown({
 
   useEffect(() => {
     if (open) {
-      const prevOverflow = document.body.style.overflow;
-      document.body.style.overflow = 'hidden';
+      document.body.classList.add('overflow-hidden');
       return () => {
-        document.body.style.overflow = prevOverflow;
+        document.body.classList.remove('overflow-hidden');
       };
     }
   }, [open]);
@@ -93,7 +92,7 @@ export default function ParticipantDropdown({
     createPortal(
       <ul
         ref={listRef}
-        className="scrollbar-hide fixed z-[100] min-w-[11rem] rounded border border-lol-border bg-lol-card py-1 shadow-lg"
+        className="fixed z-[100] min-w-[11rem] rounded border border-lol-border bg-lol-card py-1 shadow-lg"
         role="listbox"
         style={{
           ...(position.top !== undefined ? { top: position.top } : { bottom: position.bottom }),
@@ -139,9 +138,9 @@ export default function ParticipantDropdown({
                   isSelected && 'bg-lol-bg-card/80',
                 )}
               >
-                <span className="lol-desc shrink-0 text-lol-muted">#{i + 1}</span>
+                <span className="shrink-0 text-sm text-lol-muted">#{i + 1}</span>
                 <span className="min-w-0 flex-1 truncate">{optionLabel}</span>
-                {isExcluded && <span className="lol-desc shrink-0 text-lol-muted">{t('selected')}</span>}
+                {isExcluded && <span className="shrink-0 text-sm text-lol-muted">{t('selected')}</span>}
               </button>
             </li>
           );

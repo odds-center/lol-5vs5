@@ -5,6 +5,8 @@ import { ROLES, type Role } from '@/types';
 import RoleIcon from './RoleIcon';
 import RoleDropdown from './RoleDropdown';
 import { useTranslation } from '@/components/LanguageProvider';
+import { inputClass } from '@/lib/styles';
+import { cn } from '@/lib/utils';
 
 const MAX_PER_ROLE = 2;
 
@@ -58,7 +60,7 @@ export default function ParticipantSlots({ slots, onChange }: ParticipantSlotsPr
               key={slot.id}
               className='border-b border-lol-border/50 transition-colors last:border-b-0 hover:bg-lol-card/30'
             >
-              <td className='lol-desc whitespace-nowrap py-1.5 pl-3 pr-1.5'>
+              <td className='whitespace-nowrap py-1.5 pl-3 pr-1.5 text-sm'>
                 <span className='inline-flex h-6 min-w-[2rem] items-center justify-center rounded-md bg-lol-card/80 px-1.5 text-center text-sm text-lol-muted'>
                   {i + 1}
                 </span>
@@ -79,7 +81,7 @@ export default function ParticipantSlots({ slots, onChange }: ParticipantSlotsPr
                   }
                   tabIndex={i + 1}
                   placeholder={t('placeholderNickname')}
-                  className='lol-input w-full min-w-[5rem] max-w-[140px] rounded-lg'
+                  className={cn(inputClass, 'w-full min-w-[5rem] max-w-[140px] rounded-lg')}
                 />
               </td>
               <td className='whitespace-nowrap py-1.5 px-1.5'>
@@ -101,7 +103,7 @@ export default function ParticipantSlots({ slots, onChange }: ParticipantSlotsPr
                   }}
                   tabIndex={i + 11}
                   placeholder={t('placeholderMmr')}
-                  className='lol-input min-w-[8rem] w-[8rem] rounded-lg'
+                  className={cn(inputClass, 'w-[8rem] min-w-[8rem] rounded-lg')}
                 />
               </td>
               <td className='whitespace-nowrap py-1.5 pl-1.5 pr-2'>
@@ -143,7 +145,7 @@ export default function ParticipantSlots({ slots, onChange }: ParticipantSlotsPr
                     return (
                       <label
                         key={role}
-                        className='lol-desc flex cursor-pointer items-center gap-2 rounded px-1.5 py-0.5 text-lol-muted transition-colors hover:bg-lol-card/40 hover:text-lol-gold-bright'
+                        className='flex cursor-pointer items-center gap-2 rounded px-1.5 py-0.5 text-sm text-lol-muted transition-colors hover:bg-lol-card/40 hover:text-lol-gold-bright'
                       >
                         <span className='relative flex h-4 w-4 shrink-0'>
                           <input

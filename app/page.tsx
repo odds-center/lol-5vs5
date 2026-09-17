@@ -26,6 +26,7 @@ import SeriesBanList from '@/components/SeriesBanList';
 import TeamDivisionResult from '@/components/TeamDivisionResult';
 import { useTranslation } from '@/components/LanguageProvider';
 import { cn } from '@/lib/utils';
+import { buttonPrimaryClass, buttonSecondaryClass } from '@/lib/styles';
 
 type TabId = 'participants' | 'result' | 'bans';
 
@@ -293,14 +294,14 @@ export default function Home() {
 
   return (
     <main className='relative z-10 flex min-h-screen items-center justify-center p-4 sm:p-6'>
-      <div className='lol-panel w-full max-w-6xl'>
-        <header className='lol-panel-header relative px-4 py-6 text-center sm:px-6 sm:py-8'>
+      <div className='w-full max-w-6xl rounded-xl border border-t-[3px] border-lol-border border-t-lol-gold bg-gradient-to-b from-lol-bg-card to-lol-card shadow-panel'>
+        <header className='relative border-b border-lol-border px-4 py-6 text-center tracking-wider sm:px-6 sm:py-8'>
           <LanguageSelector />
           <h1 className='font-cinzel text-2xl font-bold uppercase tracking-[0.25em] text-lol-gold drop-shadow-sm sm:text-3xl'>
             {t('appTitle')}
           </h1>
           <div className='mx-auto mt-3 h-px w-16 bg-gradient-to-r from-transparent via-lol-gold/60 to-transparent' />
-          <p className='lol-desc mt-3 tracking-wide text-lol-muted'>
+          <p className='mt-3 text-sm tracking-wide text-lol-muted'>
             {t('appSubtitle')}
           </p>
         </header>
@@ -325,12 +326,12 @@ export default function Home() {
             >
               {label}
               {id === 'participants' && (
-                <span className='lol-desc ml-1.5 font-normal text-lol-muted'>
+                <span className='ml-1.5 text-sm font-normal text-lol-muted'>
                   ({validMmrCount}/10)
                 </span>
               )}
               {id === 'bans' && seriesBans.length > 0 && (
-                <span className='lol-desc ml-1.5 font-normal text-lol-muted'>
+                <span className='ml-1.5 text-sm font-normal text-lol-muted'>
                   ({seriesBans.length} {t('gamesCount')})
                 </span>
               )}
@@ -357,7 +358,7 @@ export default function Home() {
                 }}
               />
               {validMmrCount > 0 && validMmrCount < 10 && (
-                <p className='lol-desc rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-center text-amber-300/95'>
+                <p className='rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-center text-sm text-amber-300/95'>
                   {t('needMmrAll')}
                 </p>
               )}
@@ -369,14 +370,14 @@ export default function Home() {
                     handleDivideTeams();
                   }}
                   disabled={!canDivide}
-                  className='lol-btn-primary min-w-[160px] rounded-lg py-3.5 shadow-md'
+                  className={cn(buttonPrimaryClass, 'min-w-[160px] rounded-lg py-3.5 shadow-md')}
                 >
                   {t('divideTeams')}
                 </button>
                 <button
                   type='button'
                   onClick={handleFullReset}
-                  className='lol-btn-secondary min-w-[130px] rounded-lg py-3'
+                  className={cn(buttonSecondaryClass, 'min-w-[130px] rounded-lg py-3')}
                   title={t('fullResetTitle')}
                 >
                   {t('fullReset')}
@@ -394,7 +395,7 @@ export default function Home() {
                     assignment={assignment}
                     showRoles={!!assignment}
                   />
-                  <div className='lol-divider my-2' />
+                  <div className='my-2 h-px bg-gradient-to-r from-transparent via-lol-border to-transparent' />
                   <div className='flex flex-wrap justify-center gap-3'>
                     <button
                       type='button'
@@ -403,7 +404,7 @@ export default function Home() {
                         console.log('[관악구 피바라기] 버튼 클릭: 다시 나누기');
                         handleRedivide();
                       }}
-                      className='lol-btn-secondary min-w-[120px] rounded-lg py-2.5'
+                      className={cn(buttonSecondaryClass, 'min-w-[120px] rounded-lg py-2.5')}
                     >
                       {t('redivide')}
                     </button>
@@ -414,7 +415,7 @@ export default function Home() {
                         console.log('[관악구 피바라기] 버튼 클릭: 역할 랜덤 배정');
                         handleAssignRoles();
                       }}
-                      className='lol-btn-primary min-w-[140px] rounded-lg py-2.5 shadow-md'
+                      className={cn(buttonPrimaryClass, 'min-w-[140px] rounded-lg py-2.5 shadow-md')}
                     >
                       {t('assignRoles')}
                     </button>
@@ -424,14 +425,14 @@ export default function Home() {
                         console.log('[관악구 피바라기] 버튼 클릭: 참가자 수정');
                         setActiveTab('participants');
                       }}
-                      className='lol-btn-secondary min-w-[120px] rounded-lg py-2.5'
+                      className={cn(buttonSecondaryClass, 'min-w-[120px] rounded-lg py-2.5')}
                     >
                       {t('editParticipants')}
                     </button>
                     <button
                       type='button'
                       onClick={handleFullReset}
-                      className='lol-btn-secondary min-w-[120px] rounded-lg py-2.5'
+                      className={cn(buttonSecondaryClass, 'min-w-[120px] rounded-lg py-2.5')}
                       title={t('fullResetTitle')}
                     >
                       {t('fullReset')}
@@ -447,7 +448,7 @@ export default function Home() {
                       console.log('[관악구 피바라기] 버튼 클릭: 참가자 탭에서 팀 나누기');
                       setActiveTab('participants');
                     }}
-                    className='lol-btn-primary min-w-[200px] rounded-lg py-3.5 shadow-md'
+                    className={cn(buttonPrimaryClass, 'min-w-[200px] rounded-lg py-3.5 shadow-md')}
                   >
                     {t('goToParticipantsTab')}
                   </button>

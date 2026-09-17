@@ -52,7 +52,7 @@ function TeamCard({
           <h3 className='font-cinzel text-sm font-bold uppercase tracking-[0.2em] text-lol-gold'>
             {title}
           </h3>
-          <span className='lol-desc rounded bg-black/20 px-2.5 py-1 text-lol-muted'>
+          <span className='rounded bg-black/20 px-2.5 py-1 text-sm text-lol-muted'>
             {sumLabel} {mmr} · {avgLabel} {avg}
           </span>
         </div>
@@ -65,7 +65,7 @@ function TeamCard({
                 key={role}
                 className='flex items-center justify-between gap-3 border-b border-lol-border/40 py-2.5 last:border-b-0 last:pb-0 transition-colors hover:bg-black/10'
               >
-                <span className='lol-desc flex items-center gap-2.5 text-lol-muted'>
+                <span className='flex items-center gap-2.5 text-sm text-lol-muted'>
                   <RoleIcon role={role} size={18} />
                   {label}
                 </span>

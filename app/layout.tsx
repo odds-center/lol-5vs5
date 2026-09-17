@@ -16,6 +16,10 @@ const notoSansKr = Noto_Sans_KR({
   display: 'swap',
 });
 
+/** 전역 스크롤바 숨김 (html 자신 + 모든 하위 요소) */
+const HIDE_SCROLLBARS =
+  '[scrollbar-width:none] [&::-webkit-scrollbar]:hidden [&_*]:[scrollbar-width:none] [&_*::-webkit-scrollbar]:hidden';
+
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://lol-5vs5.vercel.app';
 const SITE_NAME_KO = 'LoL 5vs5 내전 | 관악구 피바라기';
 const SITE_NAME_EN = 'LoL 5v5 In-house | Team Split & Random Roles';
@@ -197,8 +201,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang='ko' className={cn(cinzel.variable, notoSansKr.variable)}>
-      <body className='min-h-screen antialiased font-spiegel'>
+    <html lang='ko' className={cn(cinzel.variable, notoSansKr.variable, 'text-[16px]', HIDE_SCROLLBARS)}>
+      <body className='min-h-screen bg-lol-bg font-spiegel text-lol-gold-bright antialiased before:pointer-events-none before:fixed before:inset-0 before:z-0 before:bg-rift'>
         <script
           type='application/ld+json'
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
