@@ -1,7 +1,9 @@
 import type { Metadata } from 'next';
 import { Cinzel, Noto_Sans_KR } from 'next/font/google';
 import './globals.css';
+import DoorIntro from '@/components/DoorIntro';
 import { LanguageProvider } from '@/components/LanguageProvider';
+import { INTRO_SCRIPT } from '@/lib/intro';
 import {
   AUTHOR,
   FEATURE_LIST,
@@ -144,13 +146,20 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang='ko' className={cn(cinzel.variable, notoSansKr.variable, 'text-[16px]', HIDE_SCROLLBARS)}>
+    <html
+      lang='ko'
+      className={cn(cinzel.variable, notoSansKr.variable, 'text-[16px]', HIDE_SCROLLBARS)}
+      // INTRO_SCRIPT가 hydration 전에 data-intro 속성을 붙인다
+      suppressHydrationWarning
+    >
       <body className='min-h-screen bg-lol-bg font-spiegel text-lol-gold-bright antialiased before:pointer-events-none before:fixed before:inset-0 before:z-0 before:bg-rift'>
+        <script dangerouslySetInnerHTML={{ __html: INTRO_SCRIPT }} />
         <script
           type='application/ld+json'
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
         <LanguageProvider>{children}</LanguageProvider>
+        <DoorIntro />
       </body>
     </html>
   );

@@ -34,6 +34,13 @@ const config: Config = {
         // 소환사의 협곡 / 클라이언트 느낌 배경
         rift: 'radial-gradient(ellipse 100% 60% at 50% 0%, rgba(20, 45, 70, 0.4), transparent 55%), radial-gradient(ellipse 80% 40% at 50% 100%, rgba(15, 25, 40, 0.35), transparent 50%), linear-gradient(180deg, #060a10 0%, #0a0e17 30%, #0a0e17 100%)',
       },
+      keyframes: {
+        'intro-failsafe': { to: { visibility: 'hidden' } },
+      },
+      animation: {
+        // 인트로 문이 JS 실패 시에도 6초 뒤 사라지도록 하는 안전장치
+        'intro-failsafe': 'intro-failsafe 0s linear 6s forwards',
+      },
       boxShadow: {
         // 중앙 패널: 리그 오브 레전드 클라이언트 스타일 프레임
         panel:
