@@ -519,7 +519,7 @@ export default function Home() {
       {pendingImport && (
         <ImportConfirmModal
           names={pendingImport}
-          onConfirm={() => handleApplyImport(pendingImport)}
+          onConfirm={handleApplyImport}
           onCancel={() => setPendingImport(null)}
         />
       )}

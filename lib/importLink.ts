@@ -8,8 +8,14 @@
 
 export const IMPORT_PARAM = 'import';
 
-/** 참가자 슬롯 수와 동일 */
-export const MAX_IMPORT_NAMES = 10;
+/** 사이트의 참가자 슬롯 수. 이 인원까지만 실제로 명단에 들어간다 */
+export const PARTICIPANT_SLOTS = 10;
+
+/**
+ * 링크 하나에 담을 수 있는 최대 인원.
+ * 슬롯 수보다 크다 — 음성 채널 인원을 일단 다 받아온 뒤 확인 모달에서 빼기 때문이다.
+ */
+export const MAX_IMPORT_NAMES = 30;
 
 /** 닉네임 최대 길이 (디스코드 표시 이름 상한과 맞춤) */
 const MAX_NAME_LENGTH = 32;
