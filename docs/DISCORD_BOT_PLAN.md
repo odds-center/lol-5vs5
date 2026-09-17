@@ -3,7 +3,7 @@
 > 상태: **1단계 구현 완료** (실제 디스코드 서버 테스트 전)
 > 목표: 디스코드 음성 채널에 모인 사람들의 이름을 사이트 참가자 명단에 자동으로 채워 넣는다.
 >
-> 봇은 이 레포가 아니라 **별도 레포 `lol-5vs5-bot`** 에 있고 Railway에 배포한다.
+> 봇은 이 레포가 아니라 **별도 레포 [`odds-center/Discord-Bot`](https://github.com/odds-center/Discord-Bot)의 `lol/` 폴더**에 있고 Railway에 배포한다.
 > 사이트 쪽 변경(§3.4)은 이 레포에 있다.
 
 ---
@@ -44,7 +44,7 @@ HTTP Interactions(서버리스 엔드포인트)만으로는 "특정 음성 채�
    - 인원이 10명 초과: 셀렉트 메뉴로 참가할 10명 선택 → 링크 버튼
 4. 링크를 열면 사이트가 "디스코드에서 N명을 불러왔습니다. 현재 명단을 바꿀까요?" 확인 후 참가자 칸을 채운다.
 
-### 3.2 봇 (별도 레포 `lol-5vs5-bot`)
+### 3.2 봇 (별도 레포 `odds-center/Discord-Bot`, `lol/` 폴더)
 
 봇을 하위 디렉터리가 아니라 별도 레포로 둔 이유: Railway는 레포 루트를 그대로 빌드하므로 분리가 단순하고,
 사이트 커밋마다 봇이 재배포되는 일도 없다.
@@ -102,7 +102,9 @@ https://lol-5vs5.vercel.app/?import=<base64url(JSON)>
 ### 3.5 배포
 
 - 사이트: 기존 Vercel 그대로. 환경 변수 `NEXT_PUBLIC_DISCORD_APP_ID`를 넣으면 초대 버튼이 나타난다
-- 봇: **Railway** (별도 레포 연결, 실행 명령 `npm start`).
+- 봇: **Railway** (별도 레포 연결, **Root Directory = `lol`**, 실행 명령 `npm start`).
+  봇이 늘어날 수 있어 레포를 프로젝트별 폴더로 나눠 뒀으므로, 서비스마다 Root Directory를 지정해야 한다.
+  Watch Paths를 `lol/**`로 걸지 않으면 다른 폴더를 고쳐도 재배포된다.
   WebSocket 하나만 붙들고 대기하므로 메모리 100~200MB·CPU 거의 0 → Hobby 플랜 크레딧 안에서 끝난다.
   Fly.io, Render, 개인 서버/라즈베리파이 + `pm2`도 동일하게 가능
 - 디스코드 개발자 포털: 애플리케이션 생성 → Bot 토큰 발급 → 서버 초대
@@ -112,7 +114,7 @@ https://lol-5vs5.vercel.app/?import=<base64url(JSON)>
 
 ## 4. 작업 순서 (체크리스트)
 
-- [x] 봇 레포 스캐폴딩 (`discord.js`, `tsx`, 환경 변수 로딩) — 별도 레포 `lol-5vs5-bot`
+- [x] 봇 레포 스캐폴딩 (`discord.js`, `tsx`, 환경 변수 로딩) — `odds-center/Discord-Bot`의 `lol/`
 - [x] `/내전` 명령 등록 스크립트
 - [x] 음성 채널 멤버 조회 + 10명 초과 시 셀렉트 메뉴
 - [x] 링크 인코딩 및 ephemeral 응답
